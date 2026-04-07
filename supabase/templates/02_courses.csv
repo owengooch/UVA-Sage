@@ -1,0 +1,9 @@
+code,title,credits,professor,description,majors,tags,category
+APMA 2130,Ordinary Differential Equations,3,Staff,Core math course for many engineering majors.,"{Computer Engineering,Mechanical Engineering,Electrical Engineering,Civil Engineering,Systems Engineering}","{math,modeling,required}",required
+CS 2150,Program and Data Representation,4,Staff,Systems-level programming and computer architecture foundations.,"{Computer Engineering,Computer Science (Engineering)}","{systems,software,required}",required
+ECE 3750,Embedded Systems,3,Prof. Williams,Hardware-software co-design for embedded applications.,"{Computer Engineering,Electrical Engineering}","{embedded,hardware,internship-ready}",elective
+SYS 3020,Data and Information Engineering,3,Prof. Larkin,Data modeling and information systems design.,"{Systems Engineering,Computer Engineering}","{data,analytics,research}",elective
+MAE 2100,Introduction to Mechanical Design,3,Prof. Thomas,Design principles and prototyping methods for mechanical systems.,"{Mechanical Engineering,Civil Engineering}","{design,mechanics,project-based}",elective
+ENGR 3200,Engineering Product Development,3,Prof. Patel,Cross-disciplinary product development focused on teamwork and execution.,"{All}","{product,teamwork,innovation,internship-ready}",elective
+COMM 1800,Public Speaking,3,Staff,Build communication skills for presentations and interviews.,"{All}","{communication,leadership,outside}",non_engineering
+ECON 2010,Principles of Microeconomics,3,Staff,Economic fundamentals useful for product and startup thinking.,"{All}","{business,policy,outside}",non_engineering

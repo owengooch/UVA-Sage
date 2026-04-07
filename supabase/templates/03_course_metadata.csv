@@ -1,0 +1,9 @@
+course_code,semester_offered,prerequisites,source_url,last_verified_at
+APMA 2130,"{Fall,Spring}","{APMA 1110}",https://engineering.virginia.edu,2026-03-30
+CS 2150,"{Fall,Spring}","{CS 1110}",https://engineering.virginia.edu,2026-03-30
+ECE 3750,"{Fall}","{ECE 2330}",https://engineering.virginia.edu,2026-03-30
+SYS 3020,"{Spring}","{SYS 2001}",https://engineering.virginia.edu,2026-03-30
+MAE 2100,"{Fall}","{PHYS 1425}",https://engineering.virginia.edu,2026-03-30
+ENGR 3200,"{Fall,Spring}","{}",https://engineering.virginia.edu,2026-03-30
+COMM 1800,"{Fall,Spring,Summer}","{}",https://louslist.org,2026-03-30
+ECON 2010,"{Fall,Spring,Summer}","{}",https://louslist.org,2026-03-30

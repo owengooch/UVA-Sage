@@ -1,0 +1,9 @@
+major_name,course_code,requirement_bucket,is_required,min_grade,notes
+Computer Engineering,APMA 2130,math,true,C-,Core math requirement
+Computer Engineering,CS 2150,core,true,C-,Core systems requirement
+Mechanical Engineering,APMA 2130,math,true,C-,Core math requirement
+Electrical Engineering,APMA 2130,math,true,C-,Core math requirement
+Systems Engineering,APMA 2130,math,true,C-,Core math requirement
+Civil Engineering,APMA 2130,math,true,C-,Core math requirement
+Mechanical Engineering,MAE 2100,core,true,C-,Intro major requirement
+Systems Engineering,SYS 3020,core,true,C-,Data systems foundation
