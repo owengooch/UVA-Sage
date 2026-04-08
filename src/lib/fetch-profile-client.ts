@@ -1,4 +1,4 @@
-import type { ProfileGetResponse } from "@/lib/saved-profile";
+import type { ProfileGetResponse, SavedProfilePayload } from "@/lib/saved-profile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 /**
@@ -36,4 +36,48 @@ export async function fetchProfileForBrowserClient(): Promise<{
   }
 
   return { ok: true, status: res.status, data: data as ProfileGetResponse };
+}
+
+/**
+ * Persist profile to the server. Retries once after `refreshSession` if the server still
+ * returns 401 (cookie/session lag after sign-in or navigation).
+ */
+export async function putProfileForBrowserClient(
+  payload: SavedProfilePayload
+): Promise<{ ok: boolean; status: number; error?: string }> {
+  const supabase = createBrowserSupabaseClient();
+  await supabase.auth.refreshSession();
+
+  const put = () =>
+    fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(payload)
+    });
+
+  let res = await put();
+  if (res.status === 401) {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.auth.refreshSession();
+      await new Promise((r) => setTimeout(r, 350));
+      res = await put();
+    }
+  }
+
+  if (!res.ok) {
+    let message = `Could not save (HTTP ${res.status}).`;
+    try {
+      const j = (await res.json()) as { error?: string };
+      if (j.error) message = j.error;
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, status: res.status, error: message };
+  }
+
+  return { ok: true, status: res.status };
 }

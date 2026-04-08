@@ -6,7 +6,7 @@ import { buildDashboardData, type DashboardSupplemental } from "@/lib/recommenda
 import { trackLabelForValue } from "@/lib/major-tracks";
 import { pruneOutsideInterestDetails } from "@/lib/outside-interest-options";
 import { mergeCompletionLists } from "@/lib/completions-merge";
-import { fetchProfileForBrowserClient } from "@/lib/fetch-profile-client";
+import { fetchProfileForBrowserClient, putProfileForBrowserClient } from "@/lib/fetch-profile-client";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
 import { expandedCourseTagLabels } from "@/lib/course-tags-display";
@@ -508,12 +508,7 @@ export default function DashboardPage() {
             try {
               const local = parseStoredProfile(raw);
               if (local.major?.trim()) {
-                const put = await fetch("/api/profile", {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  credentials: "same-origin",
-                  body: JSON.stringify(stripToSavedPayload(local))
-                });
+                const put = await putProfileForBrowserClient(stripToSavedPayload(local));
                 if (put.ok && !cancelled) {
                   const again = await fetchProfileForBrowserClient();
                   if (again.ok && again.data && !cancelled) {

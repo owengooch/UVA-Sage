@@ -14,7 +14,7 @@ import {
   buildStudyAbroadInterestSections,
   studyAbroadInterestLabel
 } from "@/lib/study-abroad-interest-options";
-import { fetchProfileForBrowserClient } from "@/lib/fetch-profile-client";
+import { fetchProfileForBrowserClient, putProfileForBrowserClient } from "@/lib/fetch-profile-client";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -40,6 +40,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState<StudentProfileInput>(() => defaultForm());
   const [hydrated, setHydrated] = useState(false);
   const [sessionOk, setSessionOk] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -181,6 +182,7 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSaveError(null);
     let completedCourseCodes: string[] = [];
     const raw = localStorage.getItem("uvaProfile");
     if (raw) {
@@ -201,15 +203,14 @@ export default function OnboardingPage() {
     };
     localStorage.setItem("uvaProfile", JSON.stringify(stored));
 
-    try {
-      await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify(stripToSavedPayload(stored))
-      });
-    } catch {
-      /* still saved locally */
+    const payload = stripToSavedPayload(stored);
+    const result = await putProfileForBrowserClient(payload);
+    if (!result.ok) {
+      setSaveError(
+        result.error ??
+          "Could not save to your account. Your answers are kept in this browser — try Save again in a moment."
+      );
+      return;
     }
 
     router.push("/dashboard");
@@ -529,6 +530,12 @@ export default function OnboardingPage() {
             </div>
           )}
         </fieldset>
+
+        {saveError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+            {saveError}
+          </p>
+        ) : null}
 
         <button
           type="submit"
