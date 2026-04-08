@@ -12,9 +12,11 @@ function catalogNumberFromCode(code: string): number {
  * Degree elective / science bucket tags from UVA Undergraduate Record footnotes.
  * Tag shape: scope:bucket (ce:technical_elective_1, che:technical_elective, …).
  *
- * Not tagged automatically (advisor / department list only): HSS; MAE/Aero math-science/technical
- * combined elective (footnote 2); BME electives page; CpE 15cr ECE/CS depth; generic engineering elective;
- * unrestricted electives.
+ * Sources: 2025–26 Undergraduate Record program pages (see data/catalog_sources_by_major.csv).
+ *
+ * Not modeled here (department lists / advising only): HSS; MAE & Aero “Math-Science/Technical” combined
+ * elective (website list); BME electives (website); CpE 15cr ECE/CS depth grouping; SYS engineering elective
+ * (website); generic unrestricted electives.
  */
 
 const NORM = (c: string) => c.trim().replace(/\s+/g, " ").toUpperCase();
@@ -73,6 +75,25 @@ const CHE_DEPARTMENT_ELECTIVE = new Set(
   ].map(NORM)
 );
 
+/** MSE restricted electives (Undergraduate Record program notes fn. 4 / MSE electives list). */
+const MSE_DEPARTMENT_ELECTIVE = new Set(
+  [
+    "MSE 2200",
+    "MSE 2300",
+    "MSE 3080",
+    "MSE 3610",
+    "MAE 3610",
+    "MSE 4030",
+    "MSE 4055",
+    "MSE 4200",
+    "MSE 4210",
+    "MSE 4220",
+    "MSE 4270",
+    "MSE 4592",
+    "MSE 4960"
+  ].map(NORM)
+);
+
 const CHE_TECH_EXCLUDED_PHYS = new Set(["PHYS 2010", "PHYS 2020"].map(NORM));
 
 /** MAE / Aero footnote (6): design capstone course options. */
@@ -88,6 +109,13 @@ function isCivilTechnicalCourse(codeNorm: string, subj: string, _n: number): boo
   if (codeNorm === "ENGR 2595") return false;
   if (SEAS_ENGINEERING_SUBJECTS.has(subj)) return true;
   if (CIVIL_TECH_EXTRA_SUBJECTS.has(subj)) return true;
+  return false;
+}
+
+/** EE technical electives: engineering, math, or science 2000+ (catalog); align with ChE list plus BME. */
+function isEeTechnicalElective(codeNorm: string, subj: string, n: number): boolean {
+  if (isCheTechnicalElective(codeNorm, subj, n)) return true;
+  if (subj === "BME" && n >= 2000 && n <= 5999) return true;
   return false;
 }
 
@@ -134,6 +162,7 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
     tags.add("mae:math_science_elective");
     tags.add("cpe:math_science_elective");
     tags.add("es:math_science_elective");
+    tags.add("sys:math_science_elective_1");
   }
   if (subj === "APMA" && n >= 2000) {
     tags.add("seas:math_science_elective");
@@ -141,6 +170,7 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
     tags.add("mae:math_science_elective");
     tags.add("cpe:math_science_elective");
     tags.add("es:math_science_elective");
+    tags.add("sys:math_science_elective_1");
     tags.add("ce:math_science_2");
   }
   if (code === "CHEM 1420" || code === "PHYS 2415" || code === "ECE 2200" || code === "EVSC 3600") {
@@ -190,5 +220,63 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
   if (isCheTechnicalElective(code, subj, n)) tags.add("che:technical_elective");
   if (CHE_DEPARTMENT_ELECTIVE.has(code)) tags.add("che:department_elective");
 
+  if (isEeTechnicalElective(code, subj, n)) tags.add("ee:technical_elective");
+
+  if (MSE_DEPARTMENT_ELECTIVE.has(code)) tags.add("mse:mse_elective");
+  if (
+    (subj === "CHEM" && (code === "CHEM 3410" || code === "CHEM 3610")) ||
+    (subj === "APMA" && n >= 3000)
+  ) {
+    tags.add("mse:math_science_elective_2");
+  }
+
   return [...tags].sort();
+}
+
+/** Human-readable labels for dashboard / course `tags` column (Undergraduate Record footnotes). */
+const DEGREE_ELECTIVE_FULFILLMENT_LABELS: Record<string, string> = {
+  "ce:science_1": "Civil · Science elective I",
+  "ce:math_science_2": "Civil · Math/Science II",
+  "ce:technical_elective_1": "Civil · Technical elective I",
+  "ce:technical_elective_2": "Civil · Technical elective II",
+  "ce:ewr_science_2": "Civil (EWR) · Science II",
+  "ce:ewr_elective": "Civil (EWR) · Track elective",
+  "ce:cem_elective": "Civil (CEM) · Track elective",
+  "ce:structural_design": "Civil (SE) · Structural design",
+  "ce:ce_elective": "Civil · CE elective",
+  "ce:se_elective": "Civil · Structural eng. elective",
+  "ce:cem_elective_series": "Civil · CEM elective series",
+  "ce:ewr_elective_series": "Civil · EWR elective series",
+  "ce:se_elective_series": "Civil · SE elective series",
+  "seas:math_science_elective": "SEAS · Math/Science elective",
+  "aero:math_science_elective": "Aerospace · Math/Science elective",
+  "mae:math_science_elective": "Mechanical · Math/Science elective",
+  "cpe:math_science_elective": "Computer Eng. · Math/Science elective",
+  "es:math_science_elective": "Engineering Science · Math/Science elective",
+  "sys:math_science_elective_1": "Systems · Math/Science elective I",
+  "che:technical_elective": "Chemical · Technical elective",
+  "che:department_elective": "Chemical · ChE elective",
+  "ee:technical_elective": "Electrical · Technical elective",
+  "mse:mse_elective": "Materials Sci. · MSE elective",
+  "mse:math_science_elective_2": "Materials Sci. · Math/Science II",
+  "es:science_elective": "Eng. Sci. · Science elective",
+  "es:advanced_math_cs_elective": "Eng. Sci. · Adv. math/CS elective",
+  "es:advanced_technical_elective": "Eng. Sci. · Adv. technical elective",
+  "mae:design_capstone": "Mechanical · Design capstone",
+  "aero:design_capstone": "Aerospace · Design capstone",
+  "seas:physics_2_alternative": "SEAS · Physics II option",
+  "che:physics_2_alternative": "Chemical · Physics II option",
+  "seas:physics_2_lab": "SEAS · Physics II lab"
+};
+
+/** Prefix for strings merged into `courses.tags` by the recompute script (idempotent updates). */
+export const DEGREE_ELECTIVE_TAG_PREFIX = "UVA degree elective · ";
+
+export function humanLabelsForElectiveFulfillments(fulfillments: string[]): string[] {
+  return fulfillments.map((t) => DEGREE_ELECTIVE_FULFILLMENT_LABELS[t] ?? t.replace(/:/g, " · "));
+}
+
+/** Tags to store on each course row (Hooslist-safe; avoids duplicating footnote logic in SQL). */
+export function courseTagsForElectiveFulfillments(fulfillments: string[]): string[] {
+  return humanLabelsForElectiveFulfillments(fulfillments).map((l) => DEGREE_ELECTIVE_TAG_PREFIX + l);
 }

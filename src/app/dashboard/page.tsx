@@ -12,6 +12,10 @@ import { stripToSavedPayload } from "@/lib/saved-profile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { expandedCourseTagLabels } from "@/lib/course-tags-display";
 import {
+  DEGREE_ELECTIVE_TAG_PREFIX,
+  humanLabelsForElectiveFulfillments
+} from "@/lib/elective-fulfillment-tags";
+import {
   isEngineeringFocusStudyAbroad,
   profileLooksEngineeringMajor
 } from "@/lib/engineering-study-abroad-priority";
@@ -121,7 +125,10 @@ function CourseDetailModal({
 
   if (!open || !course) return null;
 
-  const tagLabels = expandedCourseTagLabels(course.tags);
+  const tagLabels = expandedCourseTagLabels(
+    course.tags?.filter((t) => !t.startsWith(DEGREE_ELECTIVE_TAG_PREFIX))
+  );
+  const degreeElectiveLabels = humanLabelsForElectiveFulfillments(course.electiveFulfillments ?? []);
   const majorsLine =
     (course.majors?.length ?? 0) > 0 ? course.majors.join(", ") : null;
 
@@ -175,6 +182,21 @@ function CourseDetailModal({
             <div className="flex gap-2">
               <dt className="w-24 shrink-0 font-medium text-slate-500">Majors</dt>
               <dd className="text-slate-900">{majorsLine}</dd>
+            </div>
+          ) : null}
+          {degreeElectiveLabels.length > 0 ? (
+            <div className="flex items-start gap-2">
+              <dt className="w-24 shrink-0 pt-0.5 font-medium text-slate-500">Degree electives</dt>
+              <dd className="flex min-w-0 flex-1 flex-wrap gap-2">
+                {degreeElectiveLabels.map((label, i) => (
+                  <span
+                    key={`deg-${label}-${i}`}
+                    className="inline-flex rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-950"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </dd>
             </div>
           ) : null}
           {tagLabels.length > 0 ? (

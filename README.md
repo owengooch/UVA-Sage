@@ -48,7 +48,7 @@ No `SUPABASE_SERVICE_ROLE_KEY` is required for the web app runtime (only for mai
 |------|-----------------|
 | Harvest course HTML (Hooslist) | `npm run harvest:hooslist` |
 | Apply harvest to Supabase | `npm run import:hooslist` — needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (see `scripts/apply-hooslist-to-supabase.mjs`) |
-| Backfill `courses.elective_fulfillments` | Apply migration `015`, then `npm run recompute:electives` (needs **service role** key in `.env.local`) |
+| Backfill `courses.elective_fulfillments` + degree elective **tags** | Apply migration `015`, then `npm run recompute:electives` (needs **service role** key in `.env.local`). Tags use footnote logic aligned with `data/catalog_sources_by_major.csv`. |
 
 Elective tags are derived from Undergraduate Record footnotes via `src/lib/elective-fulfillment-tags.ts`.
 
