@@ -9,6 +9,7 @@ import {
   subjectPrefixFromCode
 } from "@/lib/course-interest-match";
 import { impliedOutsideFamilies, outsideFamilyAlignmentMultiplier } from "@/lib/outside-discipline-alignment";
+import { engineeringElectiveRankingBoost } from "@/lib/engineering-elective-ranking";
 import {
   ENGINEERING_STUDY_ABROAD_SCORE_BONUS,
   isEngineeringFocusStudyAbroad,
@@ -132,10 +133,17 @@ const rankCourses = (
           score += MAJOR_ELECTIVE_PARTIAL_BONUS;
         }
       }
+      const { bonus: electiveBonus, electiveNote } = engineeringElectiveRankingBoost(item, {
+        major: profile?.major ?? "",
+        majorTrack: profile?.majorTrack
+      });
+      score += electiveBonus;
+      const baseReason = reasonFromScore(score, context);
+      const reason = electiveNote ? `${electiveNote} ${baseReason}` : baseReason;
       return {
         item,
         score,
-        reason: reasonFromScore(score, context)
+        reason
       };
     })
     .sort((a, b) => b.score - a.score || compareCourseCodesByCatalog(a.item.code, b.item.code));
