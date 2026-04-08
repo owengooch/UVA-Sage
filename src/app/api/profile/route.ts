@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAllowedUvaEmail } from "@/lib/auth/uva-email";
 import { parseSavedProfileJson, type ProfileGetResponse, type SavedProfilePayload } from "@/lib/saved-profile";
 import { normalizeUvaEmail } from "@/lib/quick-login-email";
 import { isSageSyntheticAuthEmail } from "@/lib/sage-username-auth";
@@ -15,6 +16,26 @@ function sageUsernameFromUser(user: {
     return em.slice(0, em.indexOf("@"));
   }
   return null;
+}
+
+function resolveStoredUvaEmail(
+  user: { email?: string | null },
+  parsed: SavedProfilePayload
+): { uvaEmail: string } | { error: string } {
+  const fromPayload = parsed.uvaEmail?.trim();
+  if (fromPayload && isAllowedUvaEmail(fromPayload)) {
+    return { uvaEmail: normalizeUvaEmail(fromPayload) };
+  }
+  const authEm = user.email?.trim() ?? "";
+  if (authEm && !isSageSyntheticAuthEmail(authEm) && isAllowedUvaEmail(authEm)) {
+    return { uvaEmail: normalizeUvaEmail(authEm) };
+  }
+  if (isSageSyntheticAuthEmail(user.email)) {
+    return {
+      error: "Enter your UVA email (@virginia.edu or @email.virginia.edu). Sage uses your real address for course-matching features."
+    };
+  }
+  return { error: "A valid UVA email address is required." };
 }
 
 export async function GET() {
@@ -55,10 +76,18 @@ export async function GET() {
   const sageUsername =
     ((profile.sage_username as string | null)?.trim() || sageUsernameFromUser(user)) ?? undefined;
 
+  const rawUva = (profile.uva_email as string | null)?.trim() ?? "";
+  const uvaFromDb =
+    rawUva && isAllowedUvaEmail(rawUva)
+      ? normalizeUvaEmail(rawUva)
+      : user.email && !isSageSyntheticAuthEmail(user.email) && isAllowedUvaEmail(user.email)
+        ? normalizeUvaEmail(user.email)
+        : undefined;
+
   const payload: Extract<ProfileGetResponse, { saved: true }> = {
     saved: true,
     sageUsername,
-    uvaEmail: (profile.uva_email as string | null)?.trim() || normalizeUvaEmail(user.email ?? ""),
+    uvaEmail: uvaFromDb,
     major: profile.major as string,
     majorTrack: (profile.major_track as string | null) ?? undefined,
     graduationYear: profile.graduation_year as string,
@@ -97,12 +126,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid profile payload." }, { status: 400 });
   }
 
-  const accountEmail = user.email ? normalizeUvaEmail(user.email) : null;
-  if (!accountEmail) {
-    return NextResponse.json(
-      { error: "Your account is missing an email identifier. Try signing in again." },
-      { status: 400 }
-    );
+  const resolvedUva = resolveStoredUvaEmail(user, parsed);
+  if ("error" in resolvedUva) {
+    return NextResponse.json({ error: resolvedUva.error }, { status: 400 });
   }
 
   const sageUsername = sageUsernameFromUser(user);
@@ -135,7 +161,7 @@ export async function PUT(request: Request) {
     const { error: uErr } = await supabase
       .from("student_profiles")
       .update({
-        uva_email: accountEmail,
+        uva_email: resolvedUva.uvaEmail,
         sage_username: sageUsername,
         major,
         graduation_year: graduationYear,
@@ -147,6 +173,13 @@ export async function PUT(request: Request) {
       .eq("id", existing.id);
 
     if (uErr) {
+      const msg = uErr.message ?? "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return NextResponse.json(
+          { error: "That UVA email is already linked to another Sage account. Use a different email or sign in to the existing account." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: uErr.message }, { status: 500 });
     }
 
@@ -188,7 +221,7 @@ export async function PUT(request: Request) {
       .from("student_profiles")
       .insert({
         user_id: user.id,
-        uva_email: accountEmail,
+        uva_email: resolvedUva.uvaEmail,
         sage_username: sageUsername,
         major,
         graduation_year: graduationYear,
@@ -201,6 +234,13 @@ export async function PUT(request: Request) {
       .single();
 
     if (iErr || !inserted) {
+      const msg = iErr?.message ?? "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return NextResponse.json(
+          { error: "That UVA email is already linked to another Sage account." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: iErr?.message ?? "Insert failed." }, { status: 500 });
     }
 

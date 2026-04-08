@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "harvest:hooslist": "mkdir -p data/hooslist-out && node scripts/hooslist-course-harvest.mjs",
-    "import:hooslist": "node scripts/apply-hooslist-to-supabase.mjs"
+    "import:hooslist": "node scripts/apply-hooslist-to-supabase.mjs",
+    "recompute:electives": "node --experimental-strip-types scripts/recompute-elective-fulfillments.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

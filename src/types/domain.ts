@@ -3,7 +3,7 @@ export type OpportunityType = "research" | "internship" | "study_abroad" | "co_c
 export interface StudentProfileInput {
   /** From account (Supabase user_metadata / student_profiles); not edited in onboarding. */
   sageUsername?: string;
-  /** Legacy / unused for username-password accounts. */
+  /** UVA student/staff email stored with the profile (required at save for Sage username accounts). */
   uvaEmail?: string;
   /** Set when the user finishes onboarding once (local); Supabase `saved` also implies completion. */
   onboardingCompleted?: boolean;
@@ -39,6 +39,8 @@ export interface Course {
   category: "required" | "elective" | "non_engineering";
   /** Set when loaded from Supabase major_requirements */
   requirementType?: string;
+  /** UVA program footnote-derived elective buckets (see elective-fulfillment-tags). */
+  electiveFulfillments?: string[];
 }
 
 export interface MajorRequirement {

@@ -14,6 +14,7 @@ type DbCourse = {
   majors: string[] | null;
   tags: string[] | null;
   category: Course["category"];
+  elective_fulfillments?: string[] | null;
 };
 
 function mapCourse(row: DbCourse, requirementType?: string): Course {
@@ -28,6 +29,9 @@ function mapCourse(row: DbCourse, requirementType?: string): Course {
     majors: row.majors ?? [],
     tags: row.tags ?? [],
     category: row.category,
+    ...(row.elective_fulfillments?.length
+      ? { electiveFulfillments: row.elective_fulfillments }
+      : {}),
     ...(requirementType ? { requirementType } : {})
   };
 }

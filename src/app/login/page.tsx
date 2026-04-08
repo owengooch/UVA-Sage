@@ -18,6 +18,16 @@ function LoginFormInner() {
     return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
   }, [searchParams]);
 
+  const callbackError = useMemo(() => {
+    const raw = searchParams.get("error");
+    if (!raw) return null;
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }, [searchParams]);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +91,9 @@ function LoginFormInner() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
+        {callbackError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{callbackError}</p>
+        ) : null}
         {error ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
         ) : null}

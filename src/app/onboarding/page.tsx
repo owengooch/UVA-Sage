@@ -14,6 +14,7 @@ import {
   buildStudyAbroadInterestSections,
   studyAbroadInterestLabel
 } from "@/lib/study-abroad-interest-options";
+import { isAllowedUvaEmail, uvaEmailHint } from "@/lib/auth/uva-email";
 import { fetchProfileForBrowserClient, putProfileForBrowserClient } from "@/lib/fetch-profile-client";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
@@ -23,6 +24,7 @@ import type { StudentProfileInput } from "@/types/domain";
 
 function defaultForm(): StudentProfileInput {
   return {
+    uvaEmail: "",
     major: ENGINEERING_MAJORS[0],
     majorTrack: defaultMajorTrackForMajor(ENGINEERING_MAJORS[0]),
     graduationYear: "2029",
@@ -66,7 +68,7 @@ export default function OnboardingPage() {
             serverSaved = true;
             setForm({
               sageUsername: data.sageUsername,
-              uvaEmail: data.uvaEmail,
+              uvaEmail: data.uvaEmail ?? "",
               major: data.major,
               majorTrack: data.majorTrack,
               graduationYear: data.graduationYear,
@@ -96,7 +98,7 @@ export default function OnboardingPage() {
           if (p.major) {
             setForm({
               sageUsername: p.sageUsername,
-              uvaEmail: p.uvaEmail,
+              uvaEmail: p.uvaEmail ?? "",
               onboardingCompleted: p.onboardingCompleted,
               major: p.major,
               majorTrack: p.majorTrack ?? defaultMajorTrackForMajor(p.major),
@@ -183,6 +185,11 @@ export default function OnboardingPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSaveError(null);
+    const uva = form.uvaEmail?.trim() ?? "";
+    if (!isAllowedUvaEmail(uva)) {
+      setSaveError(`Enter a valid UVA email. ${uvaEmailHint()}`);
+      return;
+    }
     let completedCourseCodes: string[] = [];
     const raw = localStorage.getItem("uvaProfile");
     if (raw) {
@@ -194,6 +201,7 @@ export default function OnboardingPage() {
     }
     const stored: StudentProfileInput = {
       ...form,
+      uvaEmail: uva.toLowerCase(),
       onboardingCompleted: true,
       outsideInterestDetails: pruneOutsideInterestDetails(
         form.outsideInterests,
@@ -239,6 +247,19 @@ export default function OnboardingPage() {
       </p>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="mt-8 space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <label className="block">
+          <span className="font-medium text-slate-800">UVA email</span>
+          <p className="mt-1 text-sm text-slate-600">{uvaEmailHint()} We use this to keep your plan tied to your UVA identity.</p>
+          <input
+            type="email"
+            autoComplete="email"
+            className="mt-2 w-full rounded-md border border-slate-300 p-2"
+            value={form.uvaEmail ?? ""}
+            onChange={(e) => update("uvaEmail", e.target.value)}
+            placeholder="abc2ab@virginia.edu"
+          />
+        </label>
+
         <label className="block">
           <span className="font-medium text-slate-800">Major</span>
           <select

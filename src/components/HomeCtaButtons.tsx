@@ -77,7 +77,7 @@ export function HomeCtaButtons() {
     }
     if (!data.session) {
       setSuErr(
-        "Account created but no session returned. In Supabase: Authentication → Providers → Email → turn off “Confirm email”, then try again."
+        "Account created but no session was returned. In Supabase: Authentication → Providers → Email → either turn off “Confirm email” for instant sign-in, or confirm your email from the link Supabase sends, then sign in. After you get a session, you’ll enter your UVA email on the profile form."
       );
       return;
     }

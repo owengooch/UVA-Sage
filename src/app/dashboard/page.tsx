@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildDashboardData, type DashboardSupplemental } from "@/lib/recommendations";
 import { trackLabelForValue } from "@/lib/major-tracks";
 import { pruneOutsideInterestDetails } from "@/lib/outside-interest-options";
 import { mergeCompletionLists } from "@/lib/completions-merge";
 import { fetchProfileForBrowserClient, putProfileForBrowserClient } from "@/lib/fetch-profile-client";
-import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { expandedCourseTagLabels } from "@/lib/course-tags-display";
 import {
   isEngineeringFocusStudyAbroad,
@@ -464,8 +465,10 @@ const DASHBOARD_TABS = [
 type DashboardTab = (typeof DASHBOARD_TABS)[number]["id"];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<StudentProfileInput>(emptyProfile);
   const [ready, setReady] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
   const [supplemental, setSupplemental] = useState<DashboardSupplemental | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiHint, setApiHint] = useState<string | null>(null);
@@ -482,77 +485,93 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("uvaProfile");
-    if (stored) {
-      try {
-        setProfile(parseStoredProfile(stored));
-      } catch {
-        setProfile(JSON.parse(stored) as StudentProfileInput);
-      }
-    }
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
     let cancelled = false;
     (async () => {
-      try {
-        let first = await fetchProfileForBrowserClient();
-        if (!first.ok || cancelled || !first.data) return;
-        let data = first.data;
+      const supabase = createBrowserSupabaseClient();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (!session?.user) {
+        router.replace(`/login?next=${encodeURIComponent("/dashboard")}`);
+        return;
+      }
 
-        if (!cancelled && data.saved === false) {
-          const raw = localStorage.getItem("uvaProfile");
-          if (raw) {
-            try {
-              const local = parseStoredProfile(raw);
-              if (local.major?.trim()) {
-                const put = await putProfileForBrowserClient(stripToSavedPayload(local));
-                if (put.ok && !cancelled) {
-                  const again = await fetchProfileForBrowserClient();
-                  if (again.ok && again.data && !cancelled) {
-                    data = again.data;
-                  }
-                }
-              }
-            } catch {
-              /* ignore */
-            }
+      let localProfile: StudentProfileInput = emptyProfile;
+      const stored = localStorage.getItem("uvaProfile");
+      if (stored) {
+        try {
+          localProfile = parseStoredProfile(stored);
+        } catch {
+          try {
+            localProfile = JSON.parse(stored) as StudentProfileInput;
+          } catch {
+            /* keep empty */
           }
         }
-
-        if (cancelled || data.saved !== true) return;
-        setProfile((prev) => {
-          const next: StudentProfileInput = {
-            ...prev,
-            sageUsername: data.sageUsername ?? prev.sageUsername,
-            uvaEmail: data.uvaEmail ?? prev.uvaEmail,
-            major: data.major,
-            majorTrack: data.majorTrack,
-            graduationYear: data.graduationYear,
-            researchGoal: data.researchGoal,
-            internshipGoal: data.internshipGoal,
-            studyAbroadGoal: data.studyAbroadGoal,
-            studyAbroadInterests: data.studyAbroadInterests ?? [],
-            outsideInterests: data.outsideInterests ?? [],
-            outsideInterestDetails: pruneOutsideInterestDetails(
-              data.outsideInterests ?? [],
-              data.outsideInterestDetails ?? []
-            ),
-            completedCourseCodes: prev.completedCourseCodes ?? []
-          };
-          localStorage.setItem("uvaProfile", JSON.stringify(next));
-          return next;
-        });
-      } catch {
-        /* ignore */
       }
-    })();
+
+      let prof = await fetchProfileForBrowserClient();
+      if (cancelled) return;
+      if (!prof.ok) {
+        if (prof.status === 401) {
+          router.replace(`/login?next=${encodeURIComponent("/dashboard")}`);
+          return;
+        }
+        setBootError("We could not load your saved profile. Check your connection and refresh this page.");
+        return;
+      }
+
+      let data = prof.data;
+      if (cancelled) return;
+
+      if (data?.saved === false && localProfile.major?.trim()) {
+        const put = await putProfileForBrowserClient(stripToSavedPayload(localProfile));
+        if (put.ok) {
+          prof = await fetchProfileForBrowserClient();
+          if (!prof.ok) {
+            setBootError("Profile save may have worked, but we could not reload it. Please refresh.");
+            return;
+          }
+          data = prof.data;
+        }
+      }
+
+      if (cancelled) return;
+      if (!data || data.saved !== true) {
+        router.replace("/onboarding");
+        return;
+      }
+
+      const next: StudentProfileInput = {
+        ...localProfile,
+        sageUsername: data.sageUsername ?? localProfile.sageUsername,
+        uvaEmail: data.uvaEmail ?? localProfile.uvaEmail,
+        major: data.major,
+        majorTrack: data.majorTrack,
+        graduationYear: data.graduationYear,
+        researchGoal: data.researchGoal,
+        internshipGoal: data.internshipGoal,
+        studyAbroadGoal: data.studyAbroadGoal,
+        studyAbroadInterests: data.studyAbroadInterests ?? [],
+        outsideInterests: data.outsideInterests ?? [],
+        outsideInterestDetails: pruneOutsideInterestDetails(
+          data.outsideInterests ?? [],
+          data.outsideInterestDetails ?? []
+        ),
+        completedCourseCodes: localProfile.completedCourseCodes ?? [],
+        onboardingCompleted: true
+      };
+      localStorage.setItem("uvaProfile", JSON.stringify(next));
+      setProfile(next);
+      setReady(true);
+    })().catch(() => {
+      if (!cancelled) setBootError("Something went wrong loading the dashboard. Please refresh.");
+    });
     return () => {
       cancelled = true;
     };
-  }, [ready]);
+  }, [router]);
 
   useEffect(() => {
     if (!ready) return;
@@ -693,6 +712,22 @@ export default function DashboardPage() {
     },
     [dashboard]
   );
+
+  if (bootError) {
+    return (
+      <main className="mx-auto max-w-lg px-6 py-12">
+        <h1 className="text-2xl font-bold text-slate-900">Couldn&apos;t load dashboard</h1>
+        <p className="mt-3 text-slate-600">{bootError}</p>
+        <button
+          type="button"
+          className="mt-6 rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800"
+          onClick={() => window.location.reload()}
+        >
+          Refresh page
+        </button>
+      </main>
+    );
+  }
 
   if (!ready) {
     return <main className="mx-auto max-w-5xl px-6 py-12">Loading dashboard…</main>;

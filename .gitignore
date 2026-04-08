@@ -2,6 +2,7 @@
 ._*
 
 .next
+*.tsbuildinfo
 node_modules
 .env.local
 dist
