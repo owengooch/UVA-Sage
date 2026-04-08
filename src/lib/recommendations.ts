@@ -95,19 +95,50 @@ const rankItems = <T extends { tags: string[] }>(
     .sort((a, b) => b.score - a.score);
 };
 
-/** Rank by match score (for choosing the top N), then order those picks by catalog number for display. */
-const rankCourses = (items: Course[], targetTags: string[], context: string): RecommendedItem<Course>[] => {
-  const needles = expandInterestNeedles(targetTags);
+/** Bonus when catalog row lists the student’s engineering major (often sparse in imports). */
+const MAJOR_ELECTIVE_LIST_BONUS = 5;
+const MAJOR_ELECTIVE_PARTIAL_BONUS = 3;
+
+const rankCourses = (
+  items: Course[],
+  targetTags: string[],
+  context: string,
+  profile?: Pick<StudentProfileInput, "major" | "majorTrack">
+): RecommendedItem<Course>[] => {
+  const majorTags =
+    profile?.major?.trim() || profile?.majorTrack?.trim()
+      ? [
+          ...new Set([
+            ...splitToTags(profile?.major ?? ""),
+            ...splitToTags(profile?.majorTrack ?? "")
+          ])
+        ]
+      : [];
+  const needles = expandInterestNeedles([...targetTags, ...majorTags]);
   return items
     .map((item) => {
-      const score = scoreByOverlap(needles, effectiveMatchTags(item));
+      let score = scoreByOverlap(needles, effectiveMatchTags(item));
+      if (profile?.major?.trim() && (item.majors?.length ?? 0) > 0) {
+        const pm = profile.major.trim();
+        if (item.majors!.some((x) => x === pm || x === "All")) {
+          score += MAJOR_ELECTIVE_LIST_BONUS;
+        } else if (
+          item.majors!.some(
+            (x) =>
+              x !== "All" &&
+              (pm.toLowerCase().includes(x.toLowerCase()) || x.toLowerCase().includes(pm.toLowerCase()))
+          )
+        ) {
+          score += MAJOR_ELECTIVE_PARTIAL_BONUS;
+        }
+      }
       return {
         item,
         score,
         reason: reasonFromScore(score, context)
       };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score || compareCourseCodesByCatalog(a.item.code, b.item.code));
 };
 
 const MUSIC_DEPT_SUBJECTS = new Set(["MUSI", "MUEN", "MUPF", "MUBD"]);
@@ -144,6 +175,10 @@ const rankOutsideEngineeringCourses = (
 
 const orderRecommendedCoursesByCatalog = (items: RecommendedItem<Course>[]): RecommendedItem<Course>[] =>
   [...items].sort((a, b) => compareCourseCodesByCatalog(a.item.code, b.item.code));
+
+/** Stronger matches first; catalog order only breaks ties (Engineering Courses tab). */
+const orderRecommendedByScoreThenCatalog = (items: RecommendedItem<Course>[]): RecommendedItem<Course>[] =>
+  [...items].sort((a, b) => b.score - a.score || compareCourseCodesByCatalog(a.item.code, b.item.code));
 
 /** Cap for ranked engineering elective list (Engineering Courses tab). */
 const RECOMMENDED_ENGINEERING_COURSE_LIMIT = 40;
@@ -231,8 +266,8 @@ export const buildDashboardData = (
 
   return {
     majorRequirements,
-    recommendedCourses: orderRecommendedCoursesByCatalog(
-      rankCourses(electivePool, goalTags, "Engineering Goals").slice(0, RECOMMENDED_ENGINEERING_COURSE_LIMIT)
+    recommendedCourses: orderRecommendedByScoreThenCatalog(
+      rankCourses(electivePool, goalTags, "Engineering Goals", profile).slice(0, RECOMMENDED_ENGINEERING_COURSE_LIMIT)
     ),
     researchMatches: rankItems<Opportunity>(
       opportunitiesByType("research"),

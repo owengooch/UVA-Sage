@@ -843,7 +843,7 @@ export default function DashboardPage() {
         <div id="panel-engineering" role="tabpanel" aria-labelledby="tab-engineering">
           <WidePanel
             title="Recommended Engineering Courses"
-            description="Electives matched to your research, internship, and study abroad goals. Refine those fields in your profile for tighter suggestions."
+            description="Electives ranked for your major and goals (research, internship, study abroad). Stronger matches appear first; update your profile to change the mix."
           >
             {dashboard.recommendedCourses.length === 0 ? (
               <EmptyState message="No engineering course recommendations are available yet for this profile. Add goals on your profile page." />
