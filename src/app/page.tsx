@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { HomeCtaButtons } from "@/components/HomeCtaButtons";
 
 export default function HomePage() {
   return (
@@ -14,20 +14,7 @@ export default function HomePage() {
           Answer a few questions about your major, goals, and interests. We will curate required classes
           and high-fit opportunities across research, internships, study abroad, and beyond.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/onboarding"
-            className="inline-flex rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800"
-          >
-            Start or Edit Your Profile
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            Sign In With UVA Email
-          </Link>
-        </div>
+        <HomeCtaButtons />
       </div>
     </main>
   );

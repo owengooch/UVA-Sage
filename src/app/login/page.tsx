@@ -1,17 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   isLikelyUvaEmail,
   normalizeUvaEmail,
   UVA_QUICK_LOGIN_EMAIL_KEY
 } from "@/lib/quick-login-email";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { parseStoredProfile } from "@/lib/student-profile";
 
-function LoginForm() {
+function LoginFormInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = useMemo(() => {
+    const raw = searchParams.get("next");
+    return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+  }, [searchParams]);
+  const fromOnboarding = searchParams.get("from") === "onboarding";
+
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "error" | "sent">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -26,6 +34,23 @@ function LoginForm() {
       }
     });
   }, [router]);
+
+  useEffect(() => {
+    const quick = localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY);
+    if (quick) {
+      setEmail((v) => v || quick);
+      return;
+    }
+    if (!fromOnboarding) return;
+    const raw = localStorage.getItem("uvaProfile");
+    if (!raw) return;
+    try {
+      const p = parseStoredProfile(raw);
+      if (p.uvaEmail) setEmail((v) => v || p.uvaEmail!);
+    } catch {
+      /* ignore */
+    }
+  }, [fromOnboarding]);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +73,7 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizeUvaEmail(trimmed),
       options: {
-        emailRedirectTo: `${origin}/auth/callback?next=/dashboard`
+        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`
       }
     });
     setPending(false);
@@ -71,7 +96,7 @@ function LoginForm() {
       return;
     }
     localStorage.setItem(UVA_QUICK_LOGIN_EMAIL_KEY, normalizeUvaEmail(trimmed));
-    router.push("/dashboard");
+    router.push(next);
     router.refresh();
   };
 
@@ -81,6 +106,12 @@ function LoginForm() {
       <p className="mt-2 text-slate-600">
         We’ll email you a secure link. Same email brings you back to the profile stored in your account.
       </p>
+      {fromOnboarding ? (
+        <p className="mt-3 rounded-lg border border-blue-100 bg-blue-50/90 px-4 py-3 text-sm text-blue-950">
+          You’ve finished your questionnaire in this browser. Use the <span className="font-semibold">same UVA email</span>{" "}
+          you entered in onboarding so your answers sync to your account.
+        </p>
+      ) : null}
 
       <form onSubmit={(e) => void handleMagicLink(e)} className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <label className="block">
@@ -136,5 +167,15 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto max-w-md px-6 py-12">
+          <p className="text-slate-600">Loading…</p>
+        </main>
+      }
+    >
+      <LoginFormInner />
+    </Suspense>
+  );
 }

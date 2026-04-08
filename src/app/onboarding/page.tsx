@@ -21,6 +21,7 @@ import {
   normalizeUvaEmail,
   UVA_QUICK_LOGIN_EMAIL_KEY
 } from "@/lib/quick-login-email";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { parseStoredProfile } from "@/lib/student-profile";
 import type { StudentProfileInput } from "@/types/domain";
 
@@ -250,7 +251,15 @@ export default function OnboardingPage() {
       /* still saved locally */
     }
 
-    router.push("/dashboard");
+    const supabase = createBrowserSupabaseClient();
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session?.user) {
+      router.push("/dashboard");
+      return;
+    }
+    router.push("/login?next=/dashboard&from=onboarding");
   };
 
   if (!hydrated) {
