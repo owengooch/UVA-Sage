@@ -14,6 +14,7 @@ import {
   buildStudyAbroadInterestSections,
   studyAbroadInterestLabel
 } from "@/lib/study-abroad-interest-options";
+import { fetchProfileForBrowserClient } from "@/lib/fetch-profile-client";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -57,9 +58,8 @@ export default function OnboardingPage() {
     let serverSaved = false;
     (async () => {
       try {
-        const res = await fetch("/api/profile");
-        if (res.ok) {
-          const data = (await res.json()) as ProfileGetResponse;
+        const { ok, data } = await fetchProfileForBrowserClient();
+        if (ok && data) {
           if (cancelled) return;
           if (data.saved === true) {
             serverSaved = true;
@@ -205,6 +205,7 @@ export default function OnboardingPage() {
       await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify(stripToSavedPayload(stored))
       });
     } catch {

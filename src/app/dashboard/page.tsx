@@ -6,6 +6,7 @@ import { buildDashboardData, type DashboardSupplemental } from "@/lib/recommenda
 import { trackLabelForValue } from "@/lib/major-tracks";
 import { pruneOutsideInterestDetails } from "@/lib/outside-interest-options";
 import { mergeCompletionLists } from "@/lib/completions-merge";
+import { fetchProfileForBrowserClient } from "@/lib/fetch-profile-client";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
 import { expandedCourseTagLabels } from "@/lib/course-tags-display";
@@ -497,9 +498,9 @@ export default function DashboardPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/profile");
-        if (!res.ok || cancelled) return;
-        let data = (await res.json()) as ProfileGetResponse;
+        let first = await fetchProfileForBrowserClient();
+        if (!first.ok || cancelled || !first.data) return;
+        let data = first.data;
 
         if (!cancelled && data.saved === false) {
           const raw = localStorage.getItem("uvaProfile");
@@ -510,12 +511,13 @@ export default function DashboardPage() {
                 const put = await fetch("/api/profile", {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
                   body: JSON.stringify(stripToSavedPayload(local))
                 });
                 if (put.ok && !cancelled) {
-                  const again = await fetch("/api/profile");
-                  if (again.ok && !cancelled) {
-                    data = (await again.json()) as ProfileGetResponse;
+                  const again = await fetchProfileForBrowserClient();
+                  if (again.ok && again.data && !cancelled) {
+                    data = again.data;
                   }
                 }
               }
