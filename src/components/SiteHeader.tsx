@@ -11,18 +11,19 @@ export function SiteHeader() {
   const [email, setEmail] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const quick = localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY);
-    if (quick) {
-      setEmail(quick);
-      return;
-    }
-
     const supabase = createBrowserSupabaseClient();
-    supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email ?? null));
+    const apply = (sessionEmail: string | null | undefined) => {
+      if (sessionEmail) {
+        setEmail(sessionEmail);
+        return;
+      }
+      setEmail(localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY));
+    };
+    supabase.auth.getUser().then(({ data: { user } }) => apply(user?.email ?? null));
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user?.email ?? null);
+      apply(session?.user?.email ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);

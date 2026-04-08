@@ -74,6 +74,7 @@ export default function OnboardingPage() {
           if (data.saved === true) {
             serverSaved = true;
             setForm({
+              uvaEmail: data.uvaEmail,
               major: data.major,
               majorTrack: data.majorTrack,
               graduationYear: data.graduationYear,

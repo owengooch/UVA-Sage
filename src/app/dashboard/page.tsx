@@ -7,6 +7,7 @@ import { trackLabelForValue } from "@/lib/major-tracks";
 import { pruneOutsideInterestDetails } from "@/lib/outside-interest-options";
 import { mergeCompletionLists } from "@/lib/completions-merge";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
+import { stripToSavedPayload } from "@/lib/saved-profile";
 import { expandedCourseTagLabels } from "@/lib/course-tags-display";
 import {
   isEngineeringFocusStudyAbroad,
@@ -498,11 +499,37 @@ export default function DashboardPage() {
       try {
         const res = await fetch("/api/profile");
         if (!res.ok || cancelled) return;
-        const data = (await res.json()) as ProfileGetResponse;
+        let data = (await res.json()) as ProfileGetResponse;
+
+        if (!cancelled && data.saved === false) {
+          const raw = localStorage.getItem("uvaProfile");
+          if (raw) {
+            try {
+              const local = parseStoredProfile(raw);
+              if (local.major?.trim()) {
+                const put = await fetch("/api/profile", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(stripToSavedPayload(local))
+                });
+                if (put.ok && !cancelled) {
+                  const again = await fetch("/api/profile");
+                  if (again.ok && !cancelled) {
+                    data = (await again.json()) as ProfileGetResponse;
+                  }
+                }
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+
         if (cancelled || data.saved !== true) return;
         setProfile((prev) => {
           const next: StudentProfileInput = {
             ...prev,
+            uvaEmail: data.uvaEmail ?? prev.uvaEmail,
             major: data.major,
             majorTrack: data.majorTrack,
             graduationYear: data.graduationYear,

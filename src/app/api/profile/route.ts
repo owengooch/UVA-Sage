@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseSavedProfileJson, type ProfileGetResponse, type SavedProfilePayload } from "@/lib/saved-profile";
+import { normalizeUvaEmail } from "@/lib/quick-login-email";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -14,7 +15,7 @@ export async function GET() {
 
   const { data: profile, error: pErr } = await supabase
     .from("student_profiles")
-    .select("id, major, graduation_year, outside_interests, outside_interest_details, major_track")
+    .select("id, major, graduation_year, outside_interests, outside_interest_details, major_track, uva_email")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -39,6 +40,7 @@ export async function GET() {
 
   const payload: Extract<ProfileGetResponse, { saved: true }> = {
     saved: true,
+    uvaEmail: (profile.uva_email as string | null)?.trim() || normalizeUvaEmail(user.email ?? ""),
     major: profile.major as string,
     majorTrack: (profile.major_track as string | null) ?? undefined,
     graduationYear: profile.graduation_year as string,
@@ -77,6 +79,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid profile payload." }, { status: 400 });
   }
 
+  const accountEmail = user.email ? normalizeUvaEmail(user.email) : null;
+  if (!accountEmail) {
+    return NextResponse.json(
+      { error: "Your sign-in account has no email. Use “Sign in with UVA email” (magic link)." },
+      { status: 400 }
+    );
+  }
+  if (parsed.uvaEmail && parsed.uvaEmail !== accountEmail) {
+    return NextResponse.json({ error: "Profile email must match your signed-in account." }, { status: 400 });
+  }
+
   const {
     major,
     majorTrack,
@@ -105,6 +118,7 @@ export async function PUT(request: Request) {
     const { error: uErr } = await supabase
       .from("student_profiles")
       .update({
+        uva_email: accountEmail,
         major,
         graduation_year: graduationYear,
         outside_interests: outsideInterests,
@@ -156,6 +170,7 @@ export async function PUT(request: Request) {
       .from("student_profiles")
       .insert({
         user_id: user.id,
+        uva_email: accountEmail,
         major,
         graduation_year: graduationYear,
         outside_interests: outsideInterests,
