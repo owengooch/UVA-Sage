@@ -1,3 +1,6 @@
+# macOS / AppleDouble sidecar files (break ESLint if committed)
+._*
+
 .next
 node_modules
 .env.local
