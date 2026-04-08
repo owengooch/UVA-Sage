@@ -15,8 +15,8 @@ function catalogNumberFromCode(code: string): number {
  * Sources: 2025–26 Undergraduate Record program pages (see data/catalog_sources_by_major.csv).
  *
  * Not modeled here (department lists / advising only): HSS; MAE & Aero “Math-Science/Technical” combined
- * elective (website list); BME electives (website); CpE 15cr ECE/CS depth grouping; SYS engineering elective
- * (website); generic unrestricted electives.
+ * elective (website list); BME electives (website); SYS engineering elective (website); generic unrestricted
+ * electives. CpE depth pool uses catalog core exclusions only (still subject to “foundation overlap” rules).
  */
 
 const NORM = (c: string) => c.trim().replace(/\s+/g, " ").toUpperCase();
@@ -95,6 +95,36 @@ const MSE_DEPARTMENT_ELECTIVE = new Set(
 );
 
 const CHE_TECH_EXCLUDED_PHYS = new Set(["PHYS 2010", "PHYS 2020"].map(NORM));
+
+/**
+ * CpE “15 credits ECE or CS at 3000+” pool (Record): not the required ECE/CS core, not the capstone.
+ * Foundation CS courses are excluded; advisors still apply overlap / digit rules for BSCS-style electives.
+ */
+const CPE_DEPTH_EXCLUDED_CORE = new Set(
+  [
+    "ECE 2330",
+    "ECE 2300",
+    "ECE 2700",
+    "ECE 2600",
+    "ECE 3430",
+    "ECE 4435",
+    "ECE 4440",
+    "CS 2100",
+    "CS 2120",
+    "CS 2130",
+    "CS 3100",
+    "CS 3120",
+    "CS 3130",
+    "CS 3140"
+  ].map(NORM)
+);
+
+function isCpeEceCsDepthElective(codeNorm: string, subj: string, n: number): boolean {
+  if (subj !== "CS" && subj !== "ECE") return false;
+  if (n < 3000) return false;
+  if (CPE_DEPTH_EXCLUDED_CORE.has(codeNorm)) return false;
+  return true;
+}
 
 /** MAE / Aero footnote (6): design capstone course options. */
 const MAE_DESIGN_CAPSTONE = new Set(
@@ -230,6 +260,8 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
     tags.add("mse:math_science_elective_2");
   }
 
+  if (isCpeEceCsDepthElective(code, subj, n)) tags.add("cpe:ece_cs_depth_elective");
+
   return [...tags].sort();
 }
 
@@ -252,6 +284,7 @@ const DEGREE_ELECTIVE_FULFILLMENT_LABELS: Record<string, string> = {
   "aero:math_science_elective": "Aerospace · Math/Science elective",
   "mae:math_science_elective": "Mechanical · Math/Science elective",
   "cpe:math_science_elective": "Computer Eng. · Math/Science elective",
+  "cpe:ece_cs_depth_elective": "Computer Eng. · ECE/CS depth (3000+)",
   "es:math_science_elective": "Engineering Science · Math/Science elective",
   "sys:math_science_elective_1": "Systems · Math/Science elective I",
   "che:technical_elective": "Chemical · Technical elective",
