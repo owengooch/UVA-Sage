@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const QUICK_LOGIN_EMAIL_KEY = "uvaQuickLoginEmail";
+import { normalizeUvaEmail, UVA_QUICK_LOGIN_EMAIL_KEY } from "@/lib/quick-login-email";
 
 function LoginForm() {
   const router = useRouter();
@@ -13,7 +12,7 @@ function LoginForm() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const existing = localStorage.getItem(QUICK_LOGIN_EMAIL_KEY);
+    const existing = localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY);
     if (existing) {
       router.push("/dashboard");
       router.refresh();
@@ -29,7 +28,7 @@ function LoginForm() {
       setMessage("Enter an email address.");
       return;
     }
-    localStorage.setItem(QUICK_LOGIN_EMAIL_KEY, trimmed.toLowerCase());
+    localStorage.setItem(UVA_QUICK_LOGIN_EMAIL_KEY, normalizeUvaEmail(trimmed));
     router.push("/dashboard");
     router.refresh();
   };

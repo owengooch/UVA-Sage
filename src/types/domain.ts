@@ -1,6 +1,10 @@
 export type OpportunityType = "research" | "internship" | "study_abroad" | "co_curricular";
 
 export interface StudentProfileInput {
+  /** Captured on first onboarding; used with quick login. Not sent to Supabase (auth user email is canonical). */
+  uvaEmail?: string;
+  /** Set when the user finishes onboarding once (local); Supabase `saved` also implies completion. */
+  onboardingCompleted?: boolean;
   major: string;
   /**
    * Focus / pathway / track slug. When set, `major_requirements` uses `{major} ({slug})` (see migration 004).
