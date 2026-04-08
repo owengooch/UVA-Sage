@@ -529,6 +529,7 @@ export default function DashboardPage() {
         setProfile((prev) => {
           const next: StudentProfileInput = {
             ...prev,
+            sageUsername: data.sageUsername ?? prev.sageUsername,
             uvaEmail: data.uvaEmail ?? prev.uvaEmail,
             major: data.major,
             majorTrack: data.majorTrack,

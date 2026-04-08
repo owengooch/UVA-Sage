@@ -3,6 +3,7 @@ import type { StudentProfileInput } from "@/types/domain";
 /** Payload stored in Supabase `student_profiles` + `student_goals` (no completions here). */
 export type SavedProfilePayload = Pick<
   StudentProfileInput,
+  | "sageUsername"
   | "uvaEmail"
   | "major"
   | "majorTrack"
@@ -17,6 +18,7 @@ export type SavedProfilePayload = Pick<
 
 export function stripToSavedPayload(profile: StudentProfileInput): SavedProfilePayload {
   return {
+    sageUsername: profile.sageUsername?.trim() || undefined,
     uvaEmail: profile.uvaEmail?.trim() ? profile.uvaEmail.trim().toLowerCase() : undefined,
     major: profile.major,
     majorTrack: profile.majorTrack,
@@ -37,7 +39,9 @@ export function parseSavedProfileJson(json: unknown): SavedProfilePayload | null
   const o = json as Record<string, unknown>;
   if (typeof o.major !== "string" || typeof o.graduationYear !== "string") return null;
   const uvaEmailRaw = o.uvaEmail;
+  const sageRaw = o.sageUsername;
   return {
+    sageUsername: typeof sageRaw === "string" && sageRaw.trim() ? sageRaw.trim().toLowerCase() : undefined,
     uvaEmail: typeof uvaEmailRaw === "string" && uvaEmailRaw.trim() ? uvaEmailRaw.trim().toLowerCase() : undefined,
     major: o.major,
     majorTrack: typeof o.majorTrack === "string" ? o.majorTrack : undefined,

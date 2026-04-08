@@ -3,33 +3,34 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { UVA_QUICK_LOGIN_EMAIL_KEY } from "@/lib/quick-login-email";
+import { displayAccountLabel } from "@/lib/sage-username-auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 export function SiteHeader() {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null | undefined>(undefined);
+  const [label, setLabel] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    const apply = (sessionEmail: string | null | undefined) => {
-      if (sessionEmail) {
-        setEmail(sessionEmail);
+    const apply = (user: { email?: string | null; user_metadata?: { username?: string } | null } | null) => {
+      if (!user) {
+        setLabel(null);
         return;
       }
-      setEmail(localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY));
+      setLabel(
+        displayAccountLabel(user.email, (user.user_metadata as { username?: string } | null)?.username ?? null)
+      );
     };
-    supabase.auth.getUser().then(({ data: { user } }) => apply(user?.email ?? null));
+    supabase.auth.getUser().then(({ data: { user } }) => apply(user));
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      apply(session?.user?.email ?? null);
+      apply(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
-    localStorage.removeItem(UVA_QUICK_LOGIN_EMAIL_KEY);
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.refresh();
@@ -49,12 +50,12 @@ export function SiteHeader() {
           <Link href="/dashboard" className="text-slate-600 hover:text-slate-900">
             Dashboard
           </Link>
-          {email === undefined ? (
+          {label === undefined ? (
             <span className="text-slate-400">…</span>
-          ) : email ? (
+          ) : label ? (
             <>
-              <span className="max-w-[14rem] truncate text-slate-500" title={email}>
-                {email}
+              <span className="max-w-[14rem] truncate text-slate-500" title={label}>
+                {label}
               </span>
               <button
                 type="button"

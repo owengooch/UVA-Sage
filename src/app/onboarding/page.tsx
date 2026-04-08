@@ -16,11 +16,6 @@ import {
 } from "@/lib/study-abroad-interest-options";
 import type { ProfileGetResponse } from "@/lib/saved-profile";
 import { stripToSavedPayload } from "@/lib/saved-profile";
-import {
-  isLikelyUvaEmail,
-  normalizeUvaEmail,
-  UVA_QUICK_LOGIN_EMAIL_KEY
-} from "@/lib/quick-login-email";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { parseStoredProfile } from "@/lib/student-profile";
 import type { StudentProfileInput } from "@/types/domain";
@@ -39,31 +34,25 @@ function defaultForm(): StudentProfileInput {
   };
 }
 
-function shouldSkipUvaEmailGate(args: {
-  serverSavedProfile: boolean;
-  localRaw: string | null;
-}): boolean {
-  if (args.serverSavedProfile) return true;
-  if (!args.localRaw) return false;
-  try {
-    const p = parseStoredProfile(args.localRaw);
-    if (p.onboardingCompleted === true) return true;
-    if (p.major?.trim() && p.graduationYear?.trim()) return true;
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 export default function OnboardingPage() {
   const router = useRouter();
   const [form, setForm] = useState<StudentProfileInput>(() => defaultForm());
   const [hydrated, setHydrated] = useState(false);
-  const [showUvaEmailStep, setShowUvaEmailStep] = useState(false);
-  const [uvaEmailInput, setUvaEmailInput] = useState("");
-  const [uvaEmailError, setUvaEmailError] = useState<string | null>(null);
+  const [sessionOk, setSessionOk] = useState(false);
 
   useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) {
+        router.replace("/");
+        return;
+      }
+      setSessionOk(true);
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (!sessionOk) return;
     let cancelled = false;
     let serverSaved = false;
     (async () => {
@@ -75,6 +64,7 @@ export default function OnboardingPage() {
           if (data.saved === true) {
             serverSaved = true;
             setForm({
+              sageUsername: data.sageUsername,
               uvaEmail: data.uvaEmail,
               major: data.major,
               majorTrack: data.majorTrack,
@@ -99,13 +89,12 @@ export default function OnboardingPage() {
       if (cancelled) return;
 
       const raw = localStorage.getItem("uvaProfile");
-      const skipEmail = shouldSkipUvaEmailGate({ serverSavedProfile: serverSaved, localRaw: raw });
-
       if (!serverSaved && raw) {
         try {
           const p = parseStoredProfile(raw);
           if (p.major) {
             setForm({
+              sageUsername: p.sageUsername,
               uvaEmail: p.uvaEmail,
               onboardingCompleted: p.onboardingCompleted,
               major: p.major,
@@ -128,19 +117,12 @@ export default function OnboardingPage() {
         }
       }
 
-      if (!cancelled) {
-        setShowUvaEmailStep(!skipEmail);
-        if (!skipEmail) {
-          const quick = localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY);
-          setUvaEmailInput(quick ?? "");
-        }
-        setHydrated(true);
-      }
+      if (!cancelled) setHydrated(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sessionOk]);
 
   const update = (field: keyof StudentProfileInput, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -197,24 +179,6 @@ export default function OnboardingPage() {
     [form.studyAbroadInterests]
   );
 
-  const continuePastUvaEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUvaEmailError(null);
-    const trimmed = uvaEmailInput.trim();
-    if (!trimmed) {
-      setUvaEmailError("Enter your UVA email.");
-      return;
-    }
-    if (!isLikelyUvaEmail(trimmed)) {
-      setUvaEmailError("Use your UVA email address (ending in @virginia.edu).");
-      return;
-    }
-    const normalized = normalizeUvaEmail(trimmed);
-    localStorage.setItem(UVA_QUICK_LOGIN_EMAIL_KEY, normalized);
-    setForm((prev) => ({ ...prev, uvaEmail: normalized }));
-    setShowUvaEmailStep(false);
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     let completedCourseCodes: string[] = [];
@@ -226,12 +190,8 @@ export default function OnboardingPage() {
         /* ignore */
       }
     }
-    const quick = localStorage.getItem(UVA_QUICK_LOGIN_EMAIL_KEY);
-    const resolvedUvaEmail =
-      form.uvaEmail?.trim() || (quick ? normalizeUvaEmail(quick) : undefined);
     const stored: StudentProfileInput = {
       ...form,
-      uvaEmail: resolvedUvaEmail,
       onboardingCompleted: true,
       outsideInterestDetails: pruneOutsideInterestDetails(
         form.outsideInterests,
@@ -251,62 +211,14 @@ export default function OnboardingPage() {
       /* still saved locally */
     }
 
-    const supabase = createBrowserSupabaseClient();
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-    if (session?.user) {
-      router.push("/dashboard");
-      return;
-    }
-    router.push("/login?next=/dashboard&from=onboarding");
+    router.push("/dashboard");
+    router.refresh();
   };
 
-  if (!hydrated) {
+  if (!sessionOk || !hydrated) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
         <p className="text-slate-600">Loading your profile…</p>
-      </main>
-    );
-  }
-
-  if (showUvaEmailStep) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold text-slate-900">Your Profile</h1>
-        <p className="mt-2 text-slate-600">
-          First, confirm your UVA email so we can tie your plan to the right identity in this browser.
-        </p>
-        <form
-          onSubmit={continuePastUvaEmail}
-          className="mt-8 max-w-lg space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          <label className="block">
-            <span className="font-medium text-slate-800">UVA email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              className="mt-2 w-full rounded-md border border-slate-300 p-2"
-              placeholder="you@virginia.edu"
-              value={uvaEmailInput}
-              onChange={(e) => setUvaEmailInput(e.target.value)}
-            />
-          </label>
-          {uvaEmailError ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{uvaEmailError}</p>
-          ) : null}
-          <button
-            type="submit"
-            className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800"
-          >
-            Continue to profile questions
-          </button>
-        </form>
-        <p className="mt-6 text-sm text-slate-500">
-          <Link href="/dashboard" className="font-medium text-blue-700 hover:underline">
-            Back to Dashboard
-          </Link>
-        </p>
       </main>
     );
   }

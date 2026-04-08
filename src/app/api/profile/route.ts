@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { parseSavedProfileJson, type ProfileGetResponse, type SavedProfilePayload } from "@/lib/saved-profile";
 import { normalizeUvaEmail } from "@/lib/quick-login-email";
+import { isSageSyntheticAuthEmail } from "@/lib/sage-username-auth";
 import { createClient } from "@/lib/supabase/server";
+
+function sageUsernameFromUser(user: {
+  email?: string | null;
+  user_metadata?: { username?: string } | null;
+}): string | null {
+  const meta = user.user_metadata?.username?.trim().toLowerCase();
+  if (meta) return meta;
+  const em = user.email?.trim().toLowerCase();
+  if (em && isSageSyntheticAuthEmail(em)) {
+    return em.slice(0, em.indexOf("@"));
+  }
+  return null;
+}
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,7 +29,7 @@ export async function GET() {
 
   const { data: profile, error: pErr } = await supabase
     .from("student_profiles")
-    .select("id, major, graduation_year, outside_interests, outside_interest_details, major_track, uva_email")
+    .select("id, major, graduation_year, outside_interests, outside_interest_details, major_track, uva_email, sage_username")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -38,8 +52,12 @@ export async function GET() {
     return NextResponse.json({ error: gErr.message }, { status: 500 });
   }
 
+  const sageUsername =
+    ((profile.sage_username as string | null)?.trim() || sageUsernameFromUser(user)) ?? undefined;
+
   const payload: Extract<ProfileGetResponse, { saved: true }> = {
     saved: true,
+    sageUsername,
     uvaEmail: (profile.uva_email as string | null)?.trim() || normalizeUvaEmail(user.email ?? ""),
     major: profile.major as string,
     majorTrack: (profile.major_track as string | null) ?? undefined,
@@ -82,13 +100,12 @@ export async function PUT(request: Request) {
   const accountEmail = user.email ? normalizeUvaEmail(user.email) : null;
   if (!accountEmail) {
     return NextResponse.json(
-      { error: "Your sign-in account has no email. Use “Sign in with UVA email” (magic link)." },
+      { error: "Your account is missing an email identifier. Try signing in again." },
       { status: 400 }
     );
   }
-  if (parsed.uvaEmail && parsed.uvaEmail !== accountEmail) {
-    return NextResponse.json({ error: "Profile email must match your signed-in account." }, { status: 400 });
-  }
+
+  const sageUsername = sageUsernameFromUser(user);
 
   const {
     major,
@@ -119,6 +136,7 @@ export async function PUT(request: Request) {
       .from("student_profiles")
       .update({
         uva_email: accountEmail,
+        sage_username: sageUsername,
         major,
         graduation_year: graduationYear,
         outside_interests: outsideInterests,
@@ -171,6 +189,7 @@ export async function PUT(request: Request) {
       .insert({
         user_id: user.id,
         uva_email: accountEmail,
+        sage_username: sageUsername,
         major,
         graduation_year: graduationYear,
         outside_interests: outsideInterests,
