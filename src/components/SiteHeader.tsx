@@ -5,11 +5,19 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
+const QUICK_LOGIN_EMAIL_KEY = "uvaQuickLoginEmail";
+
 export function SiteHeader() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
+    const quick = localStorage.getItem(QUICK_LOGIN_EMAIL_KEY);
+    if (quick) {
+      setEmail(quick);
+      return;
+    }
+
     const supabase = createBrowserSupabaseClient();
     supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email ?? null));
     const {
@@ -21,6 +29,7 @@ export function SiteHeader() {
   }, []);
 
   const signOut = async () => {
+    localStorage.removeItem(QUICK_LOGIN_EMAIL_KEY);
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.refresh();
