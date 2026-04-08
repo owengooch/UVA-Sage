@@ -8,7 +8,8 @@ const NORM = (c: string) => c.trim().replace(/\s+/g, " ").toUpperCase();
  * `electiveFulfillments` tag prefixes that indicate “this major’s catalog elective buckets.”
  * Order: more-specific prefixes first where we check with startsWith.
  */
-const ELECTIVE_PREFIXES_BY_MAJOR: Record<string, string[]> = {
+/** Exported for building the Engineering Courses tab pool (major-specific degree electives). */
+export const ELECTIVE_PREFIXES_BY_MAJOR: Record<string, string[]> = {
   "Aerospace Engineering": ["aero:", "mae:", "seas:"],
   "Biomedical Engineering": ["seas:"],
   "Chemical Engineering": ["che:", "seas:"],

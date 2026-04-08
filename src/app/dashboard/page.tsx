@@ -897,7 +897,7 @@ export default function DashboardPage() {
         <div id="panel-engineering" role="tabpanel" aria-labelledby="tab-engineering">
           <WidePanel
             title="Recommended Engineering Courses"
-            description="Engineering catalog electives ranked using your major’s degree elective buckets (Undergraduate Record rules in Sage) plus your goals. After importing courses, run npm run recompute:electives so each row’s elective tags stay current. Stronger matches appear first."
+            description="Courses that can count toward technical, department, and math/science degree electives for your major (not HSS or unrestricted electives). Pulled from engineering electives plus tagged math/science options. Run npm run recompute:electives after imports. Stronger matches appear first."
           >
             {dashboard.recommendedCourses.length === 0 ? (
               <EmptyState message="No engineering course recommendations are available yet for this profile. Add goals on your profile page." />

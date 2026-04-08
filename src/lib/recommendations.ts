@@ -9,6 +9,7 @@ import {
   subjectPrefixFromCode
 } from "@/lib/course-interest-match";
 import { impliedOutsideFamilies, outsideFamilyAlignmentMultiplier } from "@/lib/outside-discipline-alignment";
+import { buildEngineeringDegreeElectivePoolWithFallback } from "@/lib/engineering-elective-pool";
 import { engineeringElectiveRankingBoost } from "@/lib/engineering-elective-ranking";
 import {
   ENGINEERING_STUDY_ABROAD_SCORE_BONUS,
@@ -189,7 +190,7 @@ const orderRecommendedByScoreThenCatalog = (items: RecommendedItem<Course>[]): R
   [...items].sort((a, b) => b.score - a.score || compareCourseCodesByCatalog(a.item.code, b.item.code));
 
 /** Cap for ranked engineering elective list (Engineering Courses tab). */
-const RECOMMENDED_ENGINEERING_COURSE_LIMIT = 40;
+const RECOMMENDED_ENGINEERING_COURSE_LIMIT = 48;
 /** Cap for ranked non-engineering list (Beyond Engineering tab). */
 const RECOMMENDED_OUTSIDE_COURSE_LIMIT = 20;
 /** Cap for UVA Education Abroad program suggestions (Study Abroad tab). */
@@ -259,6 +260,12 @@ export const buildDashboardData = (
       : sampleCourses.filter((course) => course.category === "non_engineering");
   nonEngineering = nonEngineering.map(withNormalizedProfessor);
 
+  const engineeringDegreeElectivePool = buildEngineeringDegreeElectivePoolWithFallback(
+    electivePool,
+    nonEngineering,
+    profile
+  );
+
   const oppPool =
     supplemental?.opportunities && supplemental.opportunities.length > 0
       ? supplemental.opportunities
@@ -275,7 +282,10 @@ export const buildDashboardData = (
   return {
     majorRequirements,
     recommendedCourses: orderRecommendedByScoreThenCatalog(
-      rankCourses(electivePool, goalTags, "Engineering Goals", profile).slice(0, RECOMMENDED_ENGINEERING_COURSE_LIMIT)
+      rankCourses(engineeringDegreeElectivePool, goalTags, "Engineering Goals", profile).slice(
+        0,
+        RECOMMENDED_ENGINEERING_COURSE_LIMIT
+      )
     ),
     researchMatches: rankItems<Opportunity>(
       opportunitiesByType("research"),
