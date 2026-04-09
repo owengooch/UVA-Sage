@@ -4,7 +4,9 @@ insert into courses (code, title, credits, professor, description, majors, tags,
   ('ECE 3750', 'Embedded Systems', 3, 'Prof. Williams', 'Hardware-software co-design for embedded applications.', '{"Computer Engineering","Electrical Engineering"}', '{"embedded","hardware","internship-ready"}', 'elective'),
   ('SYS 3020', 'Data and Information Engineering', 3, 'Prof. Larkin', 'Data modeling and information systems design.', '{"Systems Engineering","Computer Engineering"}', '{"data","analytics","research"}', 'elective'),
   ('COMM 1800', 'Public Speaking', 3, 'Staff', 'Build communication skills for presentations and interviews.', '{"All"}', '{"communication","leadership","outside"}', 'non_engineering'),
-  ('ECON 2010', 'Principles of Microeconomics', 3, 'Staff', 'Economic fundamentals useful for product and startup thinking.', '{"All"}', '{"business","policy","outside"}', 'non_engineering')
+  ('ECON 2010', 'Principles of Microeconomics', 3, 'Staff', 'Economic fundamentals useful for product and startup thinking.', '{"All"}', '{"business","policy","outside"}', 'non_engineering'),
+  ('PSYC 2150', 'Introduction to Psychological Science', 3, 'Staff', 'Foundational methods and topics across psychology — perception, cognition, development, and mental health contexts.', '{"All"}', '{"psychology","research","outside"}', 'non_engineering'),
+  ('SOC 1010', 'Introductory Sociology', 3, 'Staff', 'Core concepts in social structure, inequality, and group behavior.', '{"All"}', '{"sociology","society","outside"}', 'non_engineering')
 on conflict (code) do nothing;
 
 insert into opportunities (type, title, description, department, eligibility, tags, link) values

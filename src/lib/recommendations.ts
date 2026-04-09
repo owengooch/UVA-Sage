@@ -9,8 +9,15 @@ import {
   subjectPrefixFromCode
 } from "@/lib/course-interest-match";
 import { resolveElectiveFulfillmentsForCourse } from "@/lib/elective-fulfillment-tags";
-import { impliedOutsideFamilies, outsideFamilyAlignmentMultiplier } from "@/lib/outside-discipline-alignment";
-import { buildEngineeringDegreeElectivePoolWithFallback } from "@/lib/engineering-elective-pool";
+import {
+  impliedOutsideFamilies,
+  outsideFamilyAlignmentMultiplier,
+  subjectToOutsideCourseFamily
+} from "@/lib/outside-discipline-alignment";
+import {
+  buildEngineeringDegreeElectivePoolWithFallback,
+  LIKELY_HSS_SUBJECTS
+} from "@/lib/engineering-elective-pool";
 import { engineeringElectiveRankingBoost } from "@/lib/engineering-elective-ranking";
 import {
   ENGINEERING_STUDY_ABROAD_SCORE_BONUS,
@@ -171,6 +178,10 @@ const rankOutsideEngineeringCourses = (
       let score = scoreByOverlap(needles, hay);
       const sub = subjectPrefixFromCode(item.code);
       score = Math.floor(score * outsideFamilyAlignmentMultiplier(sub, implied, detailCount, broadCount));
+      const courseFam = subjectToOutsideCourseFamily(sub);
+      if (courseFam && courseFam !== "general" && implied.has(courseFam)) {
+        score += 8;
+      }
       if (implied.has("music") && MUSIC_DEPT_SUBJECTS.has(sub)) {
         score += 4;
       }
@@ -190,6 +201,30 @@ function withResolvedElectiveFulfillments(course: Course): Course {
   const merged = resolveElectiveFulfillmentsForCourse(course.code, course.electiveFulfillments);
   if (merged.length === 0) return course;
   return { ...course, electiveFulfillments: merged };
+}
+
+const BEYOND_ENGINEERING_ELECTIVE_SUBJECTS = new Set<string>([
+  ...LIKELY_HSS_SUBJECTS,
+  "SOC",
+  "COGS",
+  "NESC"
+]);
+
+/**
+ * Beyond Engineering only queried `non_engineering` from the API, but many psych / sociology / HSS rows
+ * are stored as `elective` and excluded from the Engineering tab by HSS rules — merge them in by subject.
+ */
+function mergeBeyondEngineeringPool(nonEng: Course[], electives: Course[]): Course[] {
+  const byCode = new Map<string, Course>();
+  const norm = (code: string) => code.trim().replace(/\s+/g, " ");
+  for (const c of nonEng) byCode.set(norm(c.code), c);
+  for (const c of electives) {
+    const sub = subjectPrefixFromCode(c.code);
+    if (!BEYOND_ENGINEERING_ELECTIVE_SUBJECTS.has(sub)) continue;
+    const key = norm(c.code);
+    if (!byCode.has(key)) byCode.set(key, c);
+  }
+  return [...byCode.values()];
 }
 
 /** Stronger matches first; catalog order only breaks ties (Engineering Courses tab). */
@@ -271,6 +306,8 @@ export const buildDashboardData = (
       : sampleCourses.filter((course) => course.category === "non_engineering");
   nonEngineering = nonEngineering.map(withNormalizedProfessor).map(withResolvedElectiveFulfillments);
 
+  const beyondEngineeringPool = mergeBeyondEngineeringPool(nonEngineering, electivePool);
+
   const engineeringDegreeElectivePool = buildEngineeringDegreeElectivePoolWithFallback(
     electivePool,
     nonEngineering,
@@ -329,10 +366,12 @@ export const buildDashboardData = (
       "Study Abroad Goals"
     ).slice(0, RECOMMENDED_STUDY_ABROAD_PROGRAM_LIMIT),
     outsideEngineeringMatches: orderRecommendedCoursesByCatalog(
-      rankOutsideEngineeringCourses(nonEngineering, outsideTags, "Outside Engineering Interests", profile).slice(
-        0,
-        RECOMMENDED_OUTSIDE_COURSE_LIMIT
-      )
+      rankOutsideEngineeringCourses(
+        beyondEngineeringPool,
+        outsideTags,
+        "Outside Engineering Interests",
+        profile
+      ).slice(0, RECOMMENDED_OUTSIDE_COURSE_LIMIT)
     )
   };
 };

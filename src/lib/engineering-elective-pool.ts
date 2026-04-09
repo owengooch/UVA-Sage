@@ -6,7 +6,8 @@ import type { Course, StudentProfileInput } from "@/types/domain";
  * Subjects that normally count as HSS / general humanities (not technical / math–science / engineering
  * elective buckets for the Engineering Courses tab).
  */
-const LIKELY_HSS_SUBJECTS = new Set([
+/** Exported for Beyond Engineering recommendations: these often appear as `elective` but belong in the non‑engineering browse pool. */
+export const LIKELY_HSS_SUBJECTS = new Set([
   "AAS",
   "AMST",
   "ANTH",

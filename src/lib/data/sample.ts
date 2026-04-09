@@ -80,6 +80,26 @@ export const sampleCourses: Course[] = [
     majors: ["All"],
     tags: ["business", "policy", "outside"],
     category: "non_engineering"
+  },
+  {
+    code: "PSYC 2150",
+    title: "Introduction to Psychological Science",
+    credits: 3,
+    professor: "Staff",
+    description: "Foundational methods and topics across psychology — perception, cognition, development, and mental health contexts.",
+    majors: ["All"],
+    tags: ["psychology", "research", "outside"],
+    category: "non_engineering"
+  },
+  {
+    code: "SOC 1010",
+    title: "Introductory Sociology",
+    credits: 3,
+    professor: "Staff",
+    description: "Core concepts in social structure, inequality, and group behavior.",
+    majors: ["All"],
+    tags: ["sociology", "society", "outside"],
+    category: "non_engineering"
   }
 ];
 
