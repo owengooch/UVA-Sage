@@ -763,7 +763,7 @@ export default function DashboardPage() {
 
   const engineeringTabDescription = useMemo(() => {
     const base =
-      "Degree-elective and math/science pool courses for your major (not the Required Courses tab list, and not HSS or unrestricted electives). Categories follow Undergraduate Record footnote tags from Sage; run npm run recompute:electives after imports. Courses on your required plan are excluded here. Stronger matches appear first.";
+      "Degree-elective and math/science pool courses for your major (not the Required Courses tab list, and not HSS or unrestricted electives). Categories follow Undergraduate Record footnote tags (computed from each course if the database row is not backfilled yet — run npm run recompute:electives to persist tags and merge labels into course chips). Required-plan courses are excluded. Stronger matches appear first.";
     if (trackSubgroupingSupported(profile.major?.trim() ?? "", profile.majorTrack)) {
       return `${base} With a track or focus on your profile, in-category rows use catalog tags (Civil) or title/description keywords (other majors); confirm all rules in the official catalog.`;
     }

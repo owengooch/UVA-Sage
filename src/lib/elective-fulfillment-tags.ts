@@ -265,6 +265,19 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
   return [...tags].sort();
 }
 
+/**
+ * Tags for recommendation UI: use the database row when backfilled non-empty; otherwise derive from catalog rules
+ * (same logic as `npm run recompute:electives`) so elective sections work before/without a DB backfill.
+ */
+export function resolveElectiveFulfillmentsForCourse(
+  courseCode: string,
+  fromDatabase: string[] | null | undefined
+): string[] {
+  const fromDb = fromDatabase?.filter((t) => String(t).trim()) ?? [];
+  if (fromDb.length > 0) return fromDb;
+  return computeElectiveFulfillmentTags(courseCode);
+}
+
 /** Human-readable labels for dashboard / course `tags` column (Undergraduate Record footnotes). */
 const DEGREE_ELECTIVE_FULFILLMENT_LABELS: Record<string, string> = {
   "ce:science_1": "Civil · Science elective I",

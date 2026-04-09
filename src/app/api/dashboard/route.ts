@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { professorFromDb } from "@/lib/course-professor";
+import { resolveElectiveFulfillmentsForCourse } from "@/lib/elective-fulfillment-tags";
 import { resolveMajorKeyForCatalog } from "@/lib/major-tracks";
 import { sortCoursesByCatalog } from "@/lib/course-interest-match";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
@@ -20,6 +21,7 @@ type DbCourse = {
 function mapCourse(row: DbCourse, requirementType?: string): Course {
   const credits = typeof row.credits === "string" ? parseFloat(row.credits) : row.credits;
   const professor = professorFromDb(row.professor);
+  const electiveFulfillments = resolveElectiveFulfillmentsForCourse(row.code, row.elective_fulfillments);
   return {
     code: row.code,
     title: row.title,
@@ -29,9 +31,7 @@ function mapCourse(row: DbCourse, requirementType?: string): Course {
     majors: row.majors ?? [],
     tags: row.tags ?? [],
     category: row.category,
-    ...(row.elective_fulfillments?.length
-      ? { electiveFulfillments: row.elective_fulfillments }
-      : {}),
+    ...(electiveFulfillments.length > 0 ? { electiveFulfillments } : {}),
     ...(requirementType ? { requirementType } : {})
   };
 }

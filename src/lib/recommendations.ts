@@ -8,6 +8,7 @@ import {
   sortCoursesByCatalog,
   subjectPrefixFromCode
 } from "@/lib/course-interest-match";
+import { resolveElectiveFulfillmentsForCourse } from "@/lib/elective-fulfillment-tags";
 import { impliedOutsideFamilies, outsideFamilyAlignmentMultiplier } from "@/lib/outside-discipline-alignment";
 import { buildEngineeringDegreeElectivePoolWithFallback } from "@/lib/engineering-elective-pool";
 import { engineeringElectiveRankingBoost } from "@/lib/engineering-elective-ranking";
@@ -185,6 +186,12 @@ const rankOutsideEngineeringCourses = (
 const orderRecommendedCoursesByCatalog = (items: RecommendedItem<Course>[]): RecommendedItem<Course>[] =>
   [...items].sort((a, b) => compareCourseCodesByCatalog(a.item.code, b.item.code));
 
+function withResolvedElectiveFulfillments(course: Course): Course {
+  const merged = resolveElectiveFulfillmentsForCourse(course.code, course.electiveFulfillments);
+  if (merged.length === 0) return course;
+  return { ...course, electiveFulfillments: merged };
+}
+
 /** Stronger matches first; catalog order only breaks ties (Engineering Courses tab). */
 const orderRecommendedByScoreThenCatalog = (items: RecommendedItem<Course>[]): RecommendedItem<Course>[] =>
   [...items].sort((a, b) => b.score - a.score || compareCourseCodesByCatalog(a.item.code, b.item.code));
@@ -256,13 +263,13 @@ export const buildDashboardData = (
     supplemental?.electiveCourses && supplemental.electiveCourses.length > 0
       ? supplemental.electiveCourses
       : sampleElectivePool;
-  electivePool = electivePool.map(withNormalizedProfessor);
+  electivePool = electivePool.map(withNormalizedProfessor).map(withResolvedElectiveFulfillments);
 
   let nonEngineering =
     supplemental?.nonEngineeringCourses && supplemental.nonEngineeringCourses.length > 0
       ? supplemental.nonEngineeringCourses
       : sampleCourses.filter((course) => course.category === "non_engineering");
-  nonEngineering = nonEngineering.map(withNormalizedProfessor);
+  nonEngineering = nonEngineering.map(withNormalizedProfessor).map(withResolvedElectiveFulfillments);
 
   const engineeringDegreeElectivePool = buildEngineeringDegreeElectivePoolWithFallback(
     electivePool,
