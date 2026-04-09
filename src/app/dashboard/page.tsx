@@ -16,8 +16,8 @@ import {
   humanLabelsForElectiveFulfillments
 } from "@/lib/elective-fulfillment-tags";
 import {
-  ENGINEERING_SECTION_STYLE,
   engineeringSectionAnchorId,
+  getElectiveSectionVisual,
   groupEngineeringRecommendations
 } from "@/lib/engineering-course-sections";
 import { trackSubgroupingSupported } from "@/lib/engineering-track-course-match";
@@ -763,9 +763,9 @@ export default function DashboardPage() {
 
   const engineeringTabDescription = useMemo(() => {
     const base =
-      "Courses that can count toward technical, department, and math/science degree electives for your major (not HSS or unrestricted electives). Pulled from engineering electives plus tagged math/science options. Run npm run recompute:electives after imports. Stronger matches appear first.";
+      "Degree-elective and math/science pool courses for your major (not the Required Courses tab list, and not HSS or unrestricted electives). Categories follow Undergraduate Record footnote tags from Sage; run npm run recompute:electives after imports. Courses on your required plan are excluded here. Stronger matches appear first.";
     if (trackSubgroupingSupported(profile.major?.trim() ?? "", profile.majorTrack)) {
-      return `${base} With a track or focus on your profile, subdivisions use catalog tags (Civil) or course title/description keywords (other majors); always confirm against the Undergraduate Record.`;
+      return `${base} With a track or focus on your profile, in-category rows use catalog tags (Civil) or title/description keywords (other majors); confirm all rules in the official catalog.`;
     }
     return base;
   }, [profile.major, profile.majorTrack]);
@@ -964,7 +964,7 @@ export default function DashboardPage() {
                     aria-label="Jump to course categories"
                   >
                     {engineeringSections.map((section) => {
-                      const st = ENGINEERING_SECTION_STYLE[section.id];
+                      const st = getElectiveSectionVisual(section.id);
                       return (
                         <a
                           key={section.id}
@@ -982,7 +982,7 @@ export default function DashboardPage() {
                   </nav>
                 ) : null}
                 {engineeringSections.map((section, sectionIdx) => {
-                  const st = ENGINEERING_SECTION_STYLE[section.id];
+                  const st = getElectiveSectionVisual(section.id);
                   const sectionCount = section.subsections.reduce((n, s) => n + s.items.length, 0);
                   return (
                     <section

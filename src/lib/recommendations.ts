@@ -231,6 +231,10 @@ export const buildDashboardData = (
   sortCoursesByCatalog(majorRequirements);
   majorRequirements = majorRequirements.map(withNormalizedProfessor);
 
+  const requiredCourseCodeSet = new Set(
+    majorRequirements.map((c) => c.code.trim().replace(/\s+/g, " ").toUpperCase())
+  );
+
   const goalTags = [
     ...splitToTags(profile.researchGoal),
     ...splitToTags(profile.internshipGoal),
@@ -279,14 +283,23 @@ export const buildDashboardData = (
 
   const studyAbroadTags = studyAbroadSignalTags(profile);
 
+  const rankedEngineeringElectives = rankCourses(
+    engineeringDegreeElectivePool,
+    goalTags,
+    "Engineering Goals",
+    profile
+  );
+  const normCode = (code: string) => code.trim().replace(/\s+/g, " ").toUpperCase();
+  const engineeringElectivesExcludingRequired: RecommendedItem<Course>[] = [];
+  for (const r of rankedEngineeringElectives) {
+    if (requiredCourseCodeSet.has(normCode(r.item.code))) continue;
+    engineeringElectivesExcludingRequired.push(r);
+    if (engineeringElectivesExcludingRequired.length >= RECOMMENDED_ENGINEERING_COURSE_LIMIT) break;
+  }
+
   return {
     majorRequirements,
-    recommendedCourses: orderRecommendedByScoreThenCatalog(
-      rankCourses(engineeringDegreeElectivePool, goalTags, "Engineering Goals", profile).slice(
-        0,
-        RECOMMENDED_ENGINEERING_COURSE_LIMIT
-      )
-    ),
+    recommendedCourses: orderRecommendedByScoreThenCatalog(engineeringElectivesExcludingRequired),
     researchMatches: rankItems<Opportunity>(
       opportunitiesByType("research"),
       goalTags,

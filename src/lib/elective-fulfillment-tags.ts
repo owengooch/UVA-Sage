@@ -302,6 +302,69 @@ const DEGREE_ELECTIVE_FULFILLMENT_LABELS: Record<string, string> = {
   "seas:physics_2_lab": "SEAS · Physics II lab"
 };
 
+/**
+ * Section order on the Engineering Courses tab (first matching tag on a course wins).
+ * Aligns with common catalog priority: design → CpE depth → Civil track buckets → department electives → technical → math/science → physics options.
+ */
+export const ELECTIVE_FULFILLMENT_SECTION_ORDER: readonly string[] = [
+  "mae:design_capstone",
+  "aero:design_capstone",
+  "cpe:ece_cs_depth_elective",
+  "ce:structural_design",
+  "ce:ewr_elective",
+  "ce:cem_elective",
+  "ce:se_elective",
+  "ce:ewr_elective_series",
+  "ce:cem_elective_series",
+  "ce:se_elective_series",
+  "ce:ewr_science_2",
+  "che:department_elective",
+  "mse:mse_elective",
+  "ce:ce_elective",
+  "ce:technical_elective_1",
+  "ce:technical_elective_2",
+  "che:technical_elective",
+  "ee:technical_elective",
+  "es:advanced_technical_elective",
+  "ce:science_1",
+  "ce:math_science_2",
+  "seas:math_science_elective",
+  "aero:math_science_elective",
+  "mae:math_science_elective",
+  "cpe:math_science_elective",
+  "es:math_science_elective",
+  "sys:math_science_elective_1",
+  "mse:math_science_elective_2",
+  "es:science_elective",
+  "es:advanced_math_cs_elective",
+  "seas:physics_2_alternative",
+  "che:physics_2_alternative",
+  "seas:physics_2_lab"
+];
+
+/** Bucket for courses with no `electiveFulfillments` tags. */
+export const ELECTIVE_SECTION_UNTAGGED = "__untagged__";
+
+export function titleForElectiveFulfillmentTag(tag: string): string {
+  if (tag === ELECTIVE_SECTION_UNTAGGED) return "Other pool courses";
+  return DEGREE_ELECTIVE_FULFILLMENT_LABELS[tag] ?? tag.replace(/:/g, " · ");
+}
+
+/**
+ * One tab section per course: highest-priority fulfillment tag on the course, else first labeled tag, else first raw tag.
+ */
+export function pickPrimaryElectiveSectionTag(fulfillments: string[] | undefined): string | null {
+  const f = fulfillments?.filter((t) => t?.trim()) ?? [];
+  if (!f.length) return null;
+  const set = new Set(f);
+  for (const t of ELECTIVE_FULFILLMENT_SECTION_ORDER) {
+    if (set.has(t)) return t;
+  }
+  const labeled = [...f].sort((a, b) => a.localeCompare(b)).find((t) => t in DEGREE_ELECTIVE_FULFILLMENT_LABELS);
+  if (labeled) return labeled;
+  return f[0];
+}
+
 /** Prefix for strings merged into `courses.tags` by the recompute script (idempotent updates). */
 export const DEGREE_ELECTIVE_TAG_PREFIX = "UVA degree elective · ";
 
