@@ -2,7 +2,7 @@ import { compareCourseCodesByCatalog } from "@/lib/course-interest-match";
 import {
   ELECTIVE_FULFILLMENT_SECTION_ORDER,
   ELECTIVE_SECTION_UNTAGGED,
-  pickPrimaryElectiveSectionTag,
+  pickPrimaryElectiveSectionTagForMajor,
   titleForElectiveFulfillmentTag
 } from "@/lib/elective-fulfillment-tags";
 import { courseAlignsWithStudentTrack, trackSubgroupingSupported } from "@/lib/engineering-track-course-match";
@@ -166,9 +166,10 @@ export function groupEngineeringRecommendations(
   profile: Pick<StudentProfileInput, "major" | "majorTrack">
 ): EngineeringCourseSection[] {
   const buckets = new Map<string, RecommendedItem<Course>[]>();
+  const major = profile.major?.trim() ?? "";
 
   for (const rec of items) {
-    const primary = pickPrimaryElectiveSectionTag(rec.item.electiveFulfillments);
+    const primary = pickPrimaryElectiveSectionTagForMajor(rec.item.electiveFulfillments, major);
     const key = primary ?? ELECTIVE_SECTION_UNTAGGED;
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key)!.push(rec);

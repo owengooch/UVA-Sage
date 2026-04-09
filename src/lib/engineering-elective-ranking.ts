@@ -1,26 +1,12 @@
 import { humanLabelsForElectiveFulfillments } from "@/lib/elective-fulfillment-tags";
+import { ELECTIVE_PREFIXES_BY_MAJOR } from "@/lib/elective-prefixes-by-major";
 import { catalogNumberFromCode, subjectPrefixFromCode } from "@/lib/course-interest-match";
 import type { Course, StudentProfileInput } from "@/types/domain";
 
 const NORM = (c: string) => c.trim().replace(/\s+/g, " ").toUpperCase();
 
-/**
- * `electiveFulfillments` tag prefixes that indicate “this major’s catalog elective buckets.”
- * Order: more-specific prefixes first where we check with startsWith.
- */
-/** Exported for building the Engineering Courses tab pool (major-specific degree electives). */
-export const ELECTIVE_PREFIXES_BY_MAJOR: Record<string, string[]> = {
-  "Aerospace Engineering": ["aero:", "mae:", "seas:"],
-  "Biomedical Engineering": ["seas:"],
-  "Chemical Engineering": ["che:", "seas:"],
-  "Civil Engineering": ["ce:", "seas:"],
-  "Computer Engineering": ["cpe:", "ee:", "seas:"],
-  "Computer Science (Engineering)": ["seas:"],
-  "Electrical Engineering": ["ee:", "seas:"],
-  "Materials Science and Engineering": ["mse:", "seas:"],
-  "Mechanical Engineering": ["mae:", "aero:", "seas:"],
-  "Systems Engineering": ["sys:", "seas:"]
-};
+/** Re-export for callers that imported from this module. */
+export { ELECTIVE_PREFIXES_BY_MAJOR };
 
 const BSCS_FOUNDATION_AND_CORE = new Set(
   [

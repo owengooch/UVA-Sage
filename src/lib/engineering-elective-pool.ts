@@ -1,4 +1,4 @@
-import { ELECTIVE_PREFIXES_BY_MAJOR } from "@/lib/engineering-elective-ranking";
+import { ELECTIVE_PREFIXES_BY_MAJOR } from "@/lib/elective-prefixes-by-major";
 import { catalogNumberFromCode, subjectPrefixFromCode } from "@/lib/course-interest-match";
 import type { Course, StudentProfileInput } from "@/types/domain";
 

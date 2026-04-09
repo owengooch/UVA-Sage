@@ -1,3 +1,5 @@
+import { ELECTIVE_PREFIXES_BY_MAJOR } from "@/lib/elective-prefixes-by-major";
+
 function subjectPrefixFromCode(code: string): string {
   const seg = code.trim().split(/\s+/)[0] ?? '';
   return seg.toUpperCase();
@@ -376,6 +378,53 @@ export function pickPrimaryElectiveSectionTag(fulfillments: string[] | undefined
   const labeled = [...f].sort((a, b) => a.localeCompare(b)).find((t) => t in DEGREE_ELECTIVE_FULFILLMENT_LABELS);
   if (labeled) return labeled;
   return f[0];
+}
+
+function pickFirstTagFromPool(pool: string[]): string | null {
+  if (!pool.length) return null;
+  const set = new Set(pool);
+  for (const t of ELECTIVE_FULFILLMENT_SECTION_ORDER) {
+    if (set.has(t)) return t;
+  }
+  const labeled = [...pool].sort((a, b) => a.localeCompare(b)).find((t) => t in DEGREE_ELECTIVE_FULFILLMENT_LABELS);
+  if (labeled) return labeled;
+  return pool[0] ?? null;
+}
+
+/**
+ * Primary section tag for the student’s major: prefer buckets from their program’s catalog (`ce:` for Civil only,
+ * `seas:` for shared pools, etc.). Avoids showing Civil-specific headings when the profile major is something else.
+ */
+export function pickPrimaryElectiveSectionTagForMajor(
+  fulfillments: string[] | undefined,
+  major: string
+): string | null {
+  const f = fulfillments?.filter((t) => String(t).trim()) ?? [];
+  if (!f.length) return null;
+
+  const majorTrim = major?.trim() ?? "";
+  const prefixes = majorTrim ? ELECTIVE_PREFIXES_BY_MAJOR[majorTrim] : null;
+
+  let pool: string[];
+  if (!prefixes?.length) {
+    pool = f;
+  } else {
+    const preferred = f.filter((t) => prefixes.some((p) => t.startsWith(p)));
+    if (preferred.length > 0) {
+      pool = preferred;
+    } else {
+      const universal = f.filter((t) => t.startsWith("seas:") || t.startsWith("sys:"));
+      if (universal.length > 0) {
+        pool = universal;
+      } else if (majorTrim !== "Civil Engineering") {
+        pool = f.filter((t) => !t.startsWith("ce:"));
+      } else {
+        pool = f;
+      }
+    }
+  }
+
+  return pickFirstTagFromPool(pool);
 }
 
 /** Prefix for strings merged into `courses.tags` by the recompute script (idempotent updates). */
