@@ -8,7 +8,11 @@
 
 @layer base {
   body {
-    @apply m-0 bg-slate-50 text-slate-900;
+    @apply m-0 min-h-screen text-slate-900;
+    background-color: rgb(241 248 255);
+    background-image: radial-gradient(ellipse 85% 55% at 100% 0%, rgb(186 230 253 / 0.55), transparent 52%),
+      radial-gradient(ellipse 70% 50% at 0% 100%, rgb(199 210 254 / 0.4), transparent 48%),
+      linear-gradient(165deg, rgb(248 250 252) 0%, rgb(240 249 255) 40%, rgb(238 242 255 / 0.85) 100%);
   }
 
   h1,
@@ -21,4 +25,31 @@
 
 a {
   color: inherit;
+}
+
+@layer components {
+  /**
+   * Primary CTA motion: lift, glow, slight press on active.
+   * Use alongside bg-blue-700 / hover:bg-blue-800 classes.
+   */
+  .motion-press-primary {
+    @apply transform-gpu transition-all duration-200 ease-out;
+  }
+  .motion-press-primary:hover {
+    @apply -translate-y-0.5 shadow-lg shadow-blue-600/35 brightness-[1.03];
+  }
+  .motion-press-primary:active {
+    @apply translate-y-0 scale-[0.98] shadow-md brightness-100;
+  }
+
+  /** Outlined / neutral buttons and links */
+  .motion-press-outline {
+    @apply transform-gpu transition-all duration-200 ease-out;
+  }
+  .motion-press-outline:hover {
+    @apply -translate-y-0.5 shadow-md;
+  }
+  .motion-press-outline:active {
+    @apply translate-y-0 scale-[0.98];
+  }
 }

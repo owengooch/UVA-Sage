@@ -59,7 +59,7 @@ const WidePanel = ({
   description?: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+  <section className="rounded-xl border border-sky-200/60 bg-white/90 p-6 shadow-md shadow-sky-900/5 backdrop-blur-sm sm:p-8">
     <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
     {description ? (
       <div className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600">{description}</div>
@@ -69,7 +69,7 @@ const WidePanel = ({
 );
 
 const EmptyState = ({ message }: { message: string }) => (
-  <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-5 py-6 text-base leading-relaxed text-slate-600">
+  <p className="rounded-xl border border-dashed border-sky-200/70 bg-sky-50/50 px-5 py-6 text-base leading-relaxed text-slate-600">
     {message}
   </p>
 );
@@ -304,7 +304,7 @@ function RecommendedCourseCell({
       <button
         type="button"
         onClick={() => onOpenDetails(course)}
-        className="group flex h-full w-full flex-col rounded-xl border border-slate-200/90 bg-white p-4 text-left shadow-sm ring-1 ring-slate-900/[0.04] transition hover:border-blue-400/70 hover:shadow-md hover:ring-blue-500/15"
+        className="group flex h-full w-full transform-gpu flex-col rounded-xl border border-slate-200/90 bg-white p-4 text-left shadow-sm ring-1 ring-slate-900/[0.04] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-400/70 hover:shadow-md hover:ring-blue-500/20 active:translate-y-0 active:scale-[0.99]"
       >
         <div className="flex items-start justify-between gap-2">
           <span className="line-clamp-3 min-w-0 text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-950">
@@ -327,7 +327,7 @@ function RecommendedCourseCell({
     <button
       type="button"
       onClick={() => onOpenDetails(course)}
-      className="flex h-full w-full flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40"
+      className="flex h-full w-full transform-gpu flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-md active:translate-y-0 active:scale-[0.99]"
     >
       <span className="line-clamp-5 text-sm font-semibold leading-snug text-slate-900">{course.title}</span>
       <span className="mt-2 font-mono text-xs font-medium tracking-tight text-slate-500">{course.code}</span>
@@ -347,7 +347,7 @@ function StudyAbroadProgramCell({
     <button
       type="button"
       onClick={() => onOpenDetails(program)}
-      className="flex h-full w-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40"
+      className="flex h-full w-full min-w-0 transform-gpu flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-md active:translate-y-0 active:scale-[0.99]"
     >
       <span className="line-clamp-3 min-w-0 text-sm font-semibold leading-snug text-slate-900">
         {program.title}
@@ -452,7 +452,7 @@ function StudyAbroadProgramModal({
           <p className="mt-2 text-base leading-relaxed text-slate-800">{summarizeStudyAbroadProgram(program)}</p>
           <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
             <summary className="cursor-pointer text-sm font-medium text-slate-800">
-              Full brochure text (from catalog)
+              Full program description
             </summary>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{program.description}</p>
           </details>
@@ -465,7 +465,7 @@ function StudyAbroadProgramModal({
         ) : null}
         {program.coursesOffered.length > 0 ? (
           <div className="mt-3">
-            <p className="text-sm font-medium text-slate-800">Courses highlighted in Sage</p>
+            <p className="text-sm font-medium text-slate-800">Courses often tied to this program</p>
             <ul className="mt-1 list-inside list-disc text-sm text-slate-700">
               {program.coursesOffered.map((c) => (
                 <li key={c}>{c}</li>
@@ -475,8 +475,8 @@ function StudyAbroadProgramModal({
         ) : (
           <p className="mt-3 text-sm text-slate-600">
             <span className="font-medium text-slate-700">Courses: </span>
-            See the program&apos;s <span className="font-medium">Academics</span> tab on the ISO site for the official
-            list by term.
+            See the program&apos;s <span className="font-medium">Academics</span> tab on Education Abroad for the
+            official list by term.
           </p>
         )}
         <p className="mt-2 text-xs text-slate-500">{program.creditNote}</p>
@@ -509,13 +509,13 @@ type DashboardApiPayload = {
 };
 
 const DASHBOARD_TABS = [
-  { id: "required" as const, label: "Required Courses", shortLabel: "Required" },
-  { id: "engineering" as const, label: "Engineering Courses", shortLabel: "Engineering" },
+  { id: "required" as const, label: "Required courses", shortLabel: "Required" },
+  { id: "engineering" as const, label: "Engineering courses", shortLabel: "Engineering" },
   { id: "research" as const, label: "Research", shortLabel: "Research" },
   { id: "internship" as const, label: "Internships", shortLabel: "Internships" },
-  { id: "studyAbroad" as const, label: "Study Abroad", shortLabel: "Abroad" },
-  { id: "outside" as const, label: "Beyond Engineering", shortLabel: "Beyond Eng." },
-  { id: "discovery" as const, label: "Discovery Tools", shortLabel: "Tools" }
+  { id: "studyAbroad" as const, label: "Study abroad", shortLabel: "Abroad" },
+  { id: "outside" as const, label: "Beyond engineering", shortLabel: "Beyond eng." },
+  { id: "discovery" as const, label: "Discovery tools", shortLabel: "Tools" }
 ] as const;
 
 type DashboardTab = (typeof DASHBOARD_TABS)[number]["id"];
@@ -763,9 +763,9 @@ export default function DashboardPage() {
 
   const engineeringTabDescription = useMemo(() => {
     const base =
-      "Degree-elective and math/science pool courses for your major (not the Required Courses tab list, and not HSS or unrestricted electives). Categories follow Undergraduate Record footnote tags (computed from each course if the database row is not backfilled yet — run npm run recompute:electives to persist tags and merge labels into course chips). Required-plan courses are excluded. Stronger matches appear first.";
+      "Suggestions for degree electives and shared math or science options that often count toward engineering programs. They exclude humanities and social sciences (HSS) electives, unrestricted electives, and anything already listed for you under Required courses. Each block follows the elective buckets used in the Undergraduate Record. Courses on your required plan are omitted. Stronger matches appear first.";
     if (trackSubgroupingSupported(profile.major?.trim() ?? "", profile.majorTrack)) {
-      return `${base} With a track or focus on your profile, in-category rows use catalog tags (Civil) or title/description keywords (other majors); confirm all rules in the official catalog.`;
+      return `${base} If you chose a track or focus on your profile, similar courses may be grouped first within a block (Civil uses official catalog tags; other majors use course titles and descriptions as a guide—always confirm in the Record).`;
     }
     return base;
   }, [profile.major, profile.majorTrack]);
@@ -800,7 +800,7 @@ export default function DashboardPage() {
         <p className="mt-3 text-slate-600">{bootError}</p>
         <button
           type="button"
-          className="mt-6 rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800"
+          className="motion-press-primary mt-6 rounded-lg bg-blue-700 px-4 py-2 font-medium text-white shadow-md shadow-blue-900/20 hover:bg-blue-800"
           onClick={() => window.location.reload()}
         >
           Refresh page
@@ -818,10 +818,13 @@ export default function DashboardPage() {
   if (!dashboard) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-bold">No Profile Found</h1>
-        <p className="mt-2 text-slate-600">Complete onboarding first to generate your personalized dashboard.</p>
-        <Link href="/onboarding" className="mt-5 inline-block rounded bg-blue-700 px-4 py-2 text-white">
-          Go to Onboarding
+        <h1 className="text-2xl font-bold">No profile found</h1>
+        <p className="mt-2 text-slate-600">Complete the profile questionnaire first to open your personalized dashboard.</p>
+        <Link
+          href="/onboarding"
+          className="motion-press-primary mt-5 inline-block rounded-lg bg-blue-700 px-4 py-2 text-white shadow-md shadow-blue-900/20 hover:bg-blue-800"
+        >
+          Go to profile setup
         </Link>
       </main>
     );
@@ -829,15 +832,17 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
-        <h1 className="text-3xl font-bold text-blue-900">UVA Sage: {profile.major} Dashboard</h1>
+      <div className="mb-6 rounded-xl border border-blue-200/70 bg-gradient-to-br from-blue-50 via-sky-50/80 to-indigo-50/70 p-5 shadow-md shadow-blue-900/10">
+        <h1 className="text-3xl font-bold text-blue-900">
+          UVA Sage · {profile.major}
+        </h1>
         {focusLabel && (
           <p className="mt-1 text-sm font-medium text-blue-900/90">Focus: {focusLabel}</p>
         )}
-        <p className="mt-2 text-blue-800">Personalized recommendations based on your goals and interests.</p>
+        <p className="mt-2 text-blue-800">Recommendations based on your goals, major, and interests.</p>
         {apiError && (
           <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-            Could not load live catalog: {apiError}. Showing sample data where available.
+            We couldn&apos;t refresh course data ({apiError}). You may see a smaller or older set of suggestions until the connection works again.
           </p>
         )}
         {apiHint && !apiError && (
@@ -846,7 +851,7 @@ export default function DashboardPage() {
       </div>
 
       <div
-        className="mb-6 -mx-1 overflow-x-auto border-b border-slate-200 pb-px"
+        className="mb-6 -mx-1 overflow-x-auto border-b border-sky-200/50 pb-px"
         role="tablist"
         aria-label="Dashboard sections"
       >
@@ -859,10 +864,10 @@ export default function DashboardPage() {
               aria-selected={activeTab === tab.id}
               id={`tab-${tab.id}`}
               aria-controls={`panel-${tab.id}`}
-              className={`shrink-0 whitespace-nowrap rounded-t-lg border border-b-0 px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
+              className={`shrink-0 whitespace-nowrap rounded-t-lg border border-b-0 px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out sm:px-4 ${
                 activeTab === tab.id
-                  ? "relative bottom-[-1px] border-slate-200 bg-white text-blue-900"
-                  : "border-transparent bg-slate-100/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? "relative bottom-[-1px] border-sky-200/80 bg-white/95 text-blue-900 shadow-sm"
+                  : "border-transparent bg-white/50 text-slate-600 hover:-translate-y-0.5 hover:bg-white/90 hover:text-slate-900 active:translate-y-0 active:scale-[0.98]"
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
@@ -878,19 +883,19 @@ export default function DashboardPage() {
           id="panel-required"
           role="tabpanel"
           aria-labelledby="tab-required"
-          className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+          className="mb-8 rounded-xl border border-sky-200/60 bg-white/90 p-6 shadow-md shadow-sky-900/5 backdrop-blur-sm sm:p-8"
         >
-          <h2 className="text-2xl font-semibold text-slate-900">Required Courses for Your Major</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Required courses for your major</h2>
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600">
-            Check off courses you have already completed. Progress is stored in this browser and carries over if you
+            Check off courses you have already completed. Your checklist is saved in this browser and carries over if you
             change major or track (overlapping course codes stay marked).{" "}
             {completionsAccountSync
-              ? "You are signed in — completions also sync to your Supabase account."
-              : "Sign in with Supabase Auth to sync the same list to your account across devices."}
+              ? "You are signed in—the same checklist syncs to your account on other devices."
+              : "Sign in so the same checklist can stay in sync when you use another device."}
           </p>
           {dashboard.majorRequirements.length === 0 ? (
             <div className="mt-4">
-              <EmptyState message="No required courses are available for this major in the current sample dataset yet." />
+              <EmptyState message="No required courses are listed for this major yet. If your program uses a track, select it on your profile and try again." />
             </div>
           ) : (
             <div className="mt-4 grid gap-6 md:grid-cols-2 md:items-start">
@@ -953,7 +958,7 @@ export default function DashboardPage() {
 
       {activeTab === "engineering" && (
         <div id="panel-engineering" role="tabpanel" aria-labelledby="tab-engineering">
-          <WidePanel title="Recommended Engineering Courses" description={engineeringTabDescription}>
+          <WidePanel title="Recommended engineering courses" description={engineeringTabDescription}>
             {dashboard.recommendedCourses.length === 0 ? (
               <EmptyState message="No engineering course recommendations are available yet for this profile. Add goals on your profile page." />
             ) : (
@@ -1015,7 +1020,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </header>
-                      <div className="space-y-5 bg-slate-50/60 px-4 py-5 sm:px-6 sm:py-6">
+                      <div className="max-h-[min(48vh,22rem)] space-y-5 overflow-y-auto overscroll-contain bg-slate-50/60 px-4 py-5 pr-3 sm:px-6 sm:py-6 sm:pr-4">
                         {section.subsections.map((sub, subIdx) => (
                           <div
                             key={`${section.id}-${sub.key}`}
@@ -1064,8 +1069,8 @@ export default function DashboardPage() {
       {activeTab === "research" && (
         <div id="panel-research" role="tabpanel" aria-labelledby="tab-research">
           <WidePanel
-            title="Research Matches"
-            description="Programs and postings aligned with your stated research interests. Update your profile if you want a different mix."
+            title="Research opportunities"
+            description="Postings and programs that line up with your research interests. Adjust your profile anytime for a different mix."
           >
             {dashboard.researchMatches.length === 0 ? (
               <EmptyState message="No research matches were found yet. Add more detail under research goals in your profile." />
@@ -1101,7 +1106,7 @@ export default function DashboardPage() {
         <div id="panel-internship" role="tabpanel" aria-labelledby="tab-internship">
           <WidePanel
             title="Internship Matches"
-            description="Opportunities scored against your internship goals and related keywords from your profile."
+            description="Internships matched to your stated goals and to keywords from your profile."
           >
             {dashboard.internshipMatches.length === 0 ? (
               <EmptyState message="No internship matches were found yet. Expand your internship goals in your profile." />
@@ -1136,7 +1141,7 @@ export default function DashboardPage() {
       {activeTab === "studyAbroad" && (
         <div id="panel-studyAbroad" role="tabpanel" aria-labelledby="tab-studyAbroad">
           <WidePanel
-            title="UVA Study Abroad Programs"
+            title="UVA study abroad programs"
             description={
               <>
                 Programs from the{" "}
@@ -1146,21 +1151,20 @@ export default function DashboardPage() {
                   rel="noreferrer"
                   className="font-medium text-blue-700 underline-offset-2 hover:underline"
                 >
-                  Education Abroad UVA Programs
+                  Education Abroad UVA programs
                 </a>{" "}
-                listing, ranked against your study abroad interests (and optional keywords) from your profile.
+                listing, ordered to match your study abroad interests (and any optional keywords) from your profile.
                 {profileLooksEngineeringMajor(profile.major) ? (
                   <>
                     {" "}
                     <span className="font-medium text-slate-700">
-                      Engineering majors get a boost for ISO programs titled around engineering, technology practice,
-                      DGIST, or the TU Dortmund exchange.
+                      Engineering majors see extra weight for programs that emphasize engineering, hands-on technology,
+                      or partner exchanges such as DGIST or TU Dortmund.
                     </span>
                   </>
                 ) : null}{" "}
-                Cards show a short summary of each program&apos;s brochure text; open a card for the full description,
-                subject areas, and ISO link. Course titles change by term—confirm details on each program&apos;s Academics
-                tab.
+                Each card summarizes the program; open it for the full description, subject areas, and a link to the
+                official program page. Offerings change by term—double-check each program&apos;s Academics tab.
               </>
             }
           >
@@ -1172,8 +1176,8 @@ export default function DashboardPage() {
               <>
                 {profileLooksEngineeringMajor(profile.major) && !profileHasStudyAbroadSignals(profile) ? (
                   <p className="mb-5 rounded-lg border border-blue-100 bg-blue-50/90 p-4 text-sm leading-relaxed text-blue-950">
-                    Add study abroad interests on your profile for better keyword matching. Until then, Sage still surfaces
-                    programs that are especially relevant for engineering students.
+                    Add study abroad interests on your profile for tighter, more personal matches. For now, you will still
+                    see programs that tend to fit engineering students.
                   </p>
                 ) : null}
                 <CatalogGridThreeColumns
@@ -1196,10 +1200,10 @@ export default function DashboardPage() {
         <div id="panel-outside" role="tabpanel" aria-labelledby="tab-outside">
           <WidePanel
             title="Beyond Engineering"
-            description="Non-engineering courses from the catalog matched to your outside-of-engineering interest choices. Update interests on your profile to explore new areas."
+            description="Courses outside engineering matched to the interests you picked on your profile. Update those choices anytime to explore new areas."
           >
             {dashboard.outsideEngineeringMatches.length === 0 ? (
-              <EmptyState message="No suggestions yet. Choose interests under “Interests Outside Engineering” on your profile." />
+              <EmptyState message="No suggestions yet. Choose interests under “Interests outside engineering” on your profile." />
             ) : (
               <CourseGridThreeColumns
                 courses={dashboard.outsideEngineeringMatches.map((r) => r.item)}
@@ -1220,35 +1224,31 @@ export default function DashboardPage() {
       {activeTab === "discovery" && (
         <div id="panel-discovery" role="tabpanel" aria-labelledby="tab-discovery">
           <WidePanel
-            title="Course Discovery Tools"
-            description="Official and widely used UVA tools for browsing schedules, registering, and exploring departments beyond what Sage auto-matches."
+            title="Course discovery tools"
+            description="Official UVA tools for browsing schedules and engineering departments—useful when you want to go beyond the suggestions on this site."
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-              <a
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-4 text-base font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
-                href="https://hooslist.virginia.edu/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Hoos&apos; List
-              </a>
-              <a
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-4 text-base font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
-                href="https://sisuva.admin.virginia.edu/psp/ihprd/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.CLASS_SEARCH.GBL"
-                target="_blank"
-                rel="noreferrer"
-              >
-                UVA SIS Class Search
-              </a>
-              <a
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-4 text-base font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
-                href="https://engineering.virginia.edu/departments"
-                target="_blank"
-                rel="noreferrer"
-              >
-                UVA Engineering Departments
-              </a>
-            </div>
+            <ul className="grid max-w-md list-none grid-cols-1 gap-2 p-0 sm:max-w-lg sm:grid-cols-2">
+              <li>
+                <a
+                  className="motion-press-outline flex h-full min-h-[2.75rem] items-center justify-center rounded-lg border border-slate-300/90 bg-white/90 px-4 py-2.5 text-center text-sm font-medium text-slate-900 shadow-sm hover:border-sky-300 hover:bg-white"
+                  href="https://hooslist.virginia.edu/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Hoos&apos; List
+                </a>
+              </li>
+              <li>
+                <a
+                  className="motion-press-outline flex h-full min-h-[2.75rem] items-center justify-center rounded-lg border border-slate-300/90 bg-white/90 px-4 py-2.5 text-center text-sm font-medium text-slate-900 shadow-sm hover:border-sky-300 hover:bg-white"
+                  href="https://engineering.virginia.edu/departments"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Engineering departments
+                </a>
+              </li>
+            </ul>
           </WidePanel>
         </div>
       )}

@@ -38,7 +38,7 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-sky-200/60 bg-white/75 shadow-sm shadow-sky-900/5 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
         <Link href="/" className="font-display text-sm font-semibold tracking-tight text-slate-900 hover:text-blue-800">
           UVA Sage
@@ -60,14 +60,17 @@ export function SiteHeader() {
               <button
                 type="button"
                 onClick={() => void signOut()}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50"
+                className="motion-press-outline rounded-md border border-slate-300/90 bg-white/60 px-3 py-1.5 text-slate-700 hover:border-sky-300 hover:bg-white"
               >
-                Sign Out
+                Sign out
               </button>
             </>
           ) : (
-            <Link href="/login" className="rounded-md bg-blue-700 px-3 py-1.5 font-medium text-white hover:bg-blue-800">
-              Sign In
+            <Link
+              href="/login"
+              className="motion-press-primary rounded-md bg-blue-700 px-3 py-1.5 font-medium text-white hover:bg-blue-800"
+            >
+              Sign in
             </Link>
           )}
         </nav>

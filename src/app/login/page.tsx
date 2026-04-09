@@ -71,7 +71,10 @@ function LoginFormInner() {
       <h1 className="text-3xl font-bold text-slate-900">Sign in</h1>
       <p className="mt-2 text-slate-600">Use the username and password you created when you signed up.</p>
 
-      <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <form
+        onSubmit={(e) => void handleSubmit(e)}
+        className="mt-6 space-y-4 rounded-xl border border-sky-200/70 bg-white/90 p-6 shadow-md shadow-sky-900/5 backdrop-blur-sm"
+      >
         <label className="block">
           <span className="font-medium text-slate-800">Username</span>
           <input
@@ -100,7 +103,7 @@ function LoginFormInner() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
+          className="motion-press-primary w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white shadow-md shadow-blue-900/20 hover:bg-blue-800 disabled:pointer-events-none disabled:opacity-60"
         >
           {pending ? "Signing in…" : "Sign in"}
         </button>
@@ -108,7 +111,7 @@ function LoginFormInner() {
 
       <p className="mt-8 text-center text-sm text-slate-600">
         <Link href="/" className="font-medium text-blue-700 hover:underline">
-          Back to Home
+          Back to home
         </Link>
       </p>
     </main>

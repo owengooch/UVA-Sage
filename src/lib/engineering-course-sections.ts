@@ -153,9 +153,9 @@ function subsectionItemsForSection(
 
 function sectionDescription(sectionKey: string): string {
   if (sectionKey === ELECTIVE_SECTION_UNTAGGED) {
-    return "These courses are not tagged with a specific degree-elective bucket yet. Run npm run recompute:electives after catalog imports.";
+    return "These courses match your goals but are not slotted into a specific degree-elective bucket label here. Use the Undergraduate Record or your advisor to confirm how they count.";
   }
-  return "Undergraduate Record footnote bucket for this elective type. Confirm credit rules and overlap on your official program page.";
+  return "Grouped using the same elective buckets as the Undergraduate Record. Always confirm credit rules and overlap on your official degree requirements page.";
 }
 
 /**

@@ -11,9 +11,9 @@ import {
 } from "@/lib/sage-username-auth";
 
 const btnPrimary =
-  "inline-flex justify-center rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-60";
+  "motion-press-primary inline-flex justify-center rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white shadow-md shadow-blue-900/15 hover:bg-blue-800 disabled:pointer-events-none disabled:opacity-60";
 const btnSecondary =
-  "inline-flex justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60";
+  "motion-press-outline inline-flex justify-center rounded-lg border border-slate-300/90 bg-white/90 px-5 py-3 font-semibold text-slate-800 shadow-sm hover:border-sky-300 hover:bg-white disabled:pointer-events-none disabled:opacity-60";
 
 type HomeMode = "loading" | "signedin" | "anon";
 
@@ -77,7 +77,7 @@ export function HomeCtaButtons() {
     }
     if (!data.session) {
       setSuErr(
-        "Account created but no session was returned. In Supabase: Authentication → Providers → Email → either turn off “Confirm email” for instant sign-in, or confirm your email from the link Supabase sends, then sign in. After you get a session, you’ll enter your UVA email on the profile form."
+        "Your account was created. If your email needs confirmation, use the link in your inbox, then sign in below. If you already confirmed or email confirmation is off for your account, try signing in now—you’ll enter your UVA email on the profile page next."
       );
       return;
     }
@@ -113,7 +113,7 @@ export function HomeCtaButtons() {
       <div className="mt-8 space-y-3">
         <div className="flex flex-wrap gap-3">
           <Link href="/dashboard" className={btnPrimary}>
-            Go to Dashboard
+            Go to dashboard
           </Link>
           <Link href="/onboarding" className={btnSecondary}>
             Update your profile

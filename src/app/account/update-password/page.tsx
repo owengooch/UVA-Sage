@@ -91,7 +91,7 @@ export default function UpdatePasswordPage() {
           <button
             type="submit"
             disabled={status === "saving" || hasSession !== true}
-            className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
+            className="motion-press-primary w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white shadow-md shadow-blue-900/20 hover:bg-blue-800 disabled:pointer-events-none disabled:opacity-60"
           >
             {status === "saving" ? "Saving…" : "Update password"}
           </button>

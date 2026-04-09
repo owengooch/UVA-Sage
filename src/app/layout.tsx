@@ -24,13 +24,14 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "UVA Sage",
-  description: "UVA Sage helps engineering students build personalized academic and opportunity plans."
+  description:
+    "Plan academics and opportunities at UVA Engineering—degree context, electives, research, internships, and study abroad in one place."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
-      <body className="min-h-screen bg-slate-50 font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased">
         <SiteHeader />
         {children}
       </body>

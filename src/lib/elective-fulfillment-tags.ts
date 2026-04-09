@@ -268,8 +268,7 @@ export function computeElectiveFulfillmentTags(courseCode: string): string[] {
 }
 
 /**
- * Tags for recommendation UI: use the database row when backfilled non-empty; otherwise derive from catalog rules
- * (same logic as `npm run recompute:electives`) so elective sections work before/without a DB backfill.
+ * Prefer saved catalog tags when present; otherwise derive degree-elective labels from course code (footnote rules).
  */
 export function resolveElectiveFulfillmentsForCourse(
   courseCode: string,
