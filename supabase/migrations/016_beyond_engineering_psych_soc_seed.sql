@@ -1,5 +1,7 @@
 -- Representative HSS courses for Beyond Engineering matching (psychology / sociology interests).
 -- Safe to re-run: skips if codes already exist.
+-- Verify after run:  select code, category, title from courses where code in ('PSYC 2150','SOC 1010');
+-- If a row already existed as another category, this file does nothing; change category manually or upsert.
 
 insert into courses (code, title, credits, professor, description, majors, tags, category)
 values

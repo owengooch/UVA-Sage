@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { isAllowedUvaEmail } from "@/lib/auth/uva-email";
-import { parseSavedProfileJson, type ProfileGetResponse, type SavedProfilePayload } from "@/lib/saved-profile";
+import {
+  coerceDbTextArray,
+  parseSavedProfileJson,
+  type ProfileGetResponse,
+  type SavedProfilePayload
+} from "@/lib/saved-profile";
 import { normalizeUvaEmail } from "@/lib/quick-login-email";
 import { isSageSyntheticAuthEmail } from "@/lib/sage-username-auth";
 import { createClient } from "@/lib/supabase/server";
@@ -91,8 +96,8 @@ export async function GET() {
     major: profile.major as string,
     majorTrack: (profile.major_track as string | null) ?? undefined,
     graduationYear: profile.graduation_year as string,
-    outsideInterests: (profile.outside_interests as string[]) ?? [],
-    outsideInterestDetails: (profile.outside_interest_details as string[]) ?? [],
+    outsideInterests: coerceDbTextArray(profile.outside_interests),
+    outsideInterestDetails: coerceDbTextArray(profile.outside_interest_details),
     researchGoal: (goals?.research_goal as string) ?? "",
     internshipGoal: (goals?.internship_goal as string) ?? "",
     studyAbroadGoal: (goals?.study_abroad_goal as string) ?? "",

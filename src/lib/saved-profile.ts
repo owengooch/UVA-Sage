@@ -1,5 +1,36 @@
 import type { StudentProfileInput } from "@/types/domain";
 
+/**
+ * Normalizes `text[]` from Postgres/PostgREST (or a single string / JSON string) into trimmed lowercase tokens.
+ */
+export function coerceDbTextArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((x) => String(x).toLowerCase().trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (!t) return [];
+    if (t.startsWith("{") && t.endsWith("}")) {
+      const inner = t.slice(1, -1).trim();
+      if (!inner) return [];
+      return inner
+        .split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+        .map((part) => part.trim().replace(/^"(.*)"$/, "$1").toLowerCase().trim())
+        .filter(Boolean);
+    }
+    try {
+      const parsed = JSON.parse(t) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.map((x) => String(x).toLowerCase().trim()).filter(Boolean);
+      }
+    } catch {
+      /* single token */
+    }
+    return [t.toLowerCase()];
+  }
+  return [];
+}
+
 /** Payload stored in Supabase `student_profiles` + `student_goals` (no completions here). */
 export type SavedProfilePayload = Pick<
   StudentProfileInput,
@@ -52,9 +83,7 @@ export function parseSavedProfileJson(json: unknown): SavedProfilePayload | null
     studyAbroadInterests: Array.isArray(o.studyAbroadInterests)
       ? (o.studyAbroadInterests as string[]).map((x) => String(x).toLowerCase().trim()).filter(Boolean)
       : [],
-    outsideInterests: Array.isArray(o.outsideInterests) ? (o.outsideInterests as string[]) : [],
-    outsideInterestDetails: Array.isArray(o.outsideInterestDetails)
-      ? (o.outsideInterestDetails as string[])
-      : []
+    outsideInterests: coerceDbTextArray(o.outsideInterests),
+    outsideInterestDetails: coerceDbTextArray(o.outsideInterestDetails)
   };
 }

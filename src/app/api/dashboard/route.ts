@@ -2,9 +2,24 @@ import { NextResponse } from "next/server";
 import { professorFromDb } from "@/lib/course-professor";
 import { resolveElectiveFulfillmentsForCourse } from "@/lib/elective-fulfillment-tags";
 import { resolveMajorKeyForCatalog } from "@/lib/major-tracks";
-import { sortCoursesByCatalog } from "@/lib/course-interest-match";
+import { sortCoursesByCatalog, subjectPrefixFromCode } from "@/lib/course-interest-match";
+import { LIKELY_HSS_SUBJECTS } from "@/lib/engineering-elective-pool";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
 import type { Course, Opportunity, StudyAbroadProgram } from "@/types/domain";
+
+export const dynamic = "force-dynamic";
+
+/** Fetch psych/soc seed rows by code if missing from paged load (conflicts, truncation). */
+const BEYOND_ENSURE_CODES = ["PSYC 2150", "SOC 1010"] as const;
+
+const BEYOND_ELECTIVE_SUBJECTS_FOR_MERGE = new Set<string>([
+  ...LIKELY_HSS_SUBJECTS,
+  "SOC",
+  "COGS",
+  "NESC"
+]);
+
+const normCourseCode = (code: string) => code.trim().replace(/\s+/g, " ");
 
 type DbCourse = {
   code: string;
@@ -34,6 +49,60 @@ function mapCourse(row: DbCourse, requirementType?: string): Course {
     ...(electiveFulfillments.length > 0 ? { electiveFulfillments } : {}),
     ...(requirementType ? { requirementType } : {})
   };
+}
+
+/**
+ * PostgREST often caps each response (~1k rows). Page the whole catalog so Beyond Engineering
+ * is not a random subset of `non_engineering` / `elective`.
+ */
+async function fetchAllCoursesForCategory(
+  supabase: ReturnType<typeof createPublicSupabaseClient>,
+  category: Course["category"]
+): Promise<DbCourse[]> {
+  const pageSize = 1000;
+  const maxRows = 100_000;
+  const rows: DbCourse[] = [];
+  for (let from = 0; from < maxRows; from += pageSize) {
+    const to = from + pageSize - 1;
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("category", category)
+      .order("code", { ascending: true })
+      .range(from, to);
+    if (error) break;
+    if (!data?.length) break;
+    rows.push(...(data as DbCourse[]));
+    if (data.length < pageSize) break;
+  }
+  return rows;
+}
+
+async function appendCoursesByCodeIfMissing(
+  supabase: ReturnType<typeof createPublicSupabaseClient>,
+  nonEngineeringCourses: Course[],
+  electiveCourses: Course[],
+  codes: readonly string[]
+): Promise<void> {
+  const present = new Set(
+    [...nonEngineeringCourses, ...electiveCourses].map((c) => normCourseCode(c.code))
+  );
+  const need = codes.filter((c) => !present.has(normCourseCode(c)));
+  if (need.length === 0) return;
+  const { data, error } = await supabase.from("courses").select("*").in("code", [...need]);
+  if (error || !data?.length) return;
+  for (const row of data as DbCourse[]) {
+    const c = mapCourse(row);
+    const sub = subjectPrefixFromCode(c.code);
+    const isEnsured = need.some((x) => normCourseCode(x) === normCourseCode(c.code));
+    if (c.category === "non_engineering") {
+      nonEngineeringCourses.push(c);
+    } else if (c.category === "elective" && BEYOND_ELECTIVE_SUBJECTS_FOR_MERGE.has(sub)) {
+      electiveCourses.push(c);
+    } else if (isEnsured) {
+      nonEngineeringCourses.push(c);
+    }
+  }
 }
 
 function mapOpportunity(row: Record<string, unknown>): Opportunity {
@@ -83,19 +152,15 @@ async function loadStudyAbroadPrograms(
 async function loadRecommendationCatalog(
   supabase: ReturnType<typeof createPublicSupabaseClient>
 ): Promise<{ electiveCourses: Course[]; nonEngineeringCourses: Course[] }> {
-  const [neRes, elRes] = await Promise.all([
-    supabase.from("courses").select("*").eq("category", "non_engineering").limit(8000),
-    supabase.from("courses").select("*").eq("category", "elective").limit(8000)
+  const [neRows, elRows] = await Promise.all([
+    fetchAllCoursesForCategory(supabase, "non_engineering"),
+    fetchAllCoursesForCategory(supabase, "elective")
   ]);
 
-  const nonEngineeringCourses =
-    !neRes.error && neRes.data
-      ? (neRes.data as DbCourse[]).map((c) => mapCourse(c))
-      : [];
+  const nonEngineeringCourses = neRows.map((c) => mapCourse(c));
+  const electiveCourses = elRows.map((c) => mapCourse(c));
 
-  const electiveRows = (!elRes.error && elRes.data ? elRes.data : []) as DbCourse[];
-  /** All engineering electives — not major-filtered, so recommendations can fill up to the UI cap (majors metadata is often incomplete in imports). */
-  const electiveCourses = electiveRows.map((c) => mapCourse(c));
+  await appendCoursesByCodeIfMissing(supabase, nonEngineeringCourses, electiveCourses, BEYOND_ENSURE_CODES);
 
   return { electiveCourses, nonEngineeringCourses };
 }
