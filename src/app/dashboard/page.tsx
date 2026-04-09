@@ -15,6 +15,8 @@ import {
   DEGREE_ELECTIVE_TAG_PREFIX,
   humanLabelsForElectiveFulfillments
 } from "@/lib/elective-fulfillment-tags";
+import { groupEngineeringRecommendations } from "@/lib/engineering-course-sections";
+import { trackSubgroupingSupported } from "@/lib/engineering-track-course-match";
 import {
   isEngineeringFocusStudyAbroad,
   profileLooksEngineeringMajor
@@ -712,6 +714,30 @@ export default function DashboardPage() {
     return { remaining, completed };
   }, [dashboard?.majorRequirements, profile.completedCourseCodes]);
 
+  const engineeringSections = useMemo(() => {
+    if (!dashboard?.recommendedCourses.length) return [];
+    return groupEngineeringRecommendations(dashboard.recommendedCourses, profile);
+  }, [dashboard?.recommendedCourses, profile]);
+
+  const engineeringReasonByCode = useMemo(() => {
+    const m = new Map<string, string>();
+    if (!dashboard?.recommendedCourses) return m;
+    for (const r of dashboard.recommendedCourses) {
+      const code = r.item.code.trim().replace(/\s+/g, " ").toUpperCase();
+      if (!m.has(code)) m.set(code, r.reason);
+    }
+    return m;
+  }, [dashboard?.recommendedCourses]);
+
+  const engineeringTabDescription = useMemo(() => {
+    const base =
+      "Courses that can count toward technical, department, and math/science degree electives for your major (not HSS or unrestricted electives). Pulled from engineering electives plus tagged math/science options. Run npm run recompute:electives after imports. Stronger matches appear first.";
+    if (trackSubgroupingSupported(profile.major?.trim() ?? "", profile.majorTrack)) {
+      return `${base} With a track or focus on your profile, subdivisions use catalog tags (Civil) or course title/description keywords (other majors); always confirm against the Undergraduate Record.`;
+    }
+    return base;
+  }, [profile.major, profile.majorTrack]);
+
   const toggleRequirementCompleted = useCallback(
     (code: string, isCompleted: boolean) => {
       if (!dashboard?.majorRequirements.length) return;
@@ -895,22 +921,52 @@ export default function DashboardPage() {
 
       {activeTab === "engineering" && (
         <div id="panel-engineering" role="tabpanel" aria-labelledby="tab-engineering">
-          <WidePanel
-            title="Recommended Engineering Courses"
-            description="Courses that can count toward technical, department, and math/science degree electives for your major (not HSS or unrestricted electives). Pulled from engineering electives plus tagged math/science options. Run npm run recompute:electives after imports. Stronger matches appear first."
-          >
+          <WidePanel title="Recommended Engineering Courses" description={engineeringTabDescription}>
             {dashboard.recommendedCourses.length === 0 ? (
               <EmptyState message="No engineering course recommendations are available yet for this profile. Add goals on your profile page." />
             ) : (
-              <CourseGridThreeColumns
-                courses={dashboard.recommendedCourses.map((r) => r.item)}
-                renderItem={(course, index) => (
-                  <RecommendedCourseCell
-                    course={course}
-                    onOpenDetails={(c) => openCourseDetail(c, dashboard.recommendedCourses[index]?.reason)}
-                  />
-                )}
-              />
+              engineeringSections.map((section) => (
+                <div key={section.id} className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
+                    <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-600">
+                      {section.description}
+                    </p>
+                  </div>
+                  {section.subsections.map((sub, subIdx) => (
+                    <div
+                      key={`${section.id}-${sub.key}`}
+                      className={
+                        sub.title && subIdx > 0
+                          ? "space-y-3 border-t border-slate-100 pt-6"
+                          : sub.title
+                            ? "space-y-3"
+                            : ""
+                      }
+                    >
+                      {sub.title ? (
+                        <h4 className="text-base font-semibold text-slate-800">{sub.title}</h4>
+                      ) : null}
+                      <CourseGridThreeColumns
+                        courses={sub.items.map((r) => r.item)}
+                        renderItem={(course) => (
+                          <RecommendedCourseCell
+                            course={course}
+                            onOpenDetails={(c) =>
+                              openCourseDetail(
+                                c,
+                                engineeringReasonByCode.get(
+                                  c.code.trim().replace(/\s+/g, " ").toUpperCase()
+                                )
+                              )
+                            }
+                          />
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))
             )}
           </WidePanel>
         </div>
