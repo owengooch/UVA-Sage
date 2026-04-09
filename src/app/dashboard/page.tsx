@@ -15,7 +15,11 @@ import {
   DEGREE_ELECTIVE_TAG_PREFIX,
   humanLabelsForElectiveFulfillments
 } from "@/lib/elective-fulfillment-tags";
-import { groupEngineeringRecommendations } from "@/lib/engineering-course-sections";
+import {
+  ENGINEERING_SECTION_STYLE,
+  engineeringSectionAnchorId,
+  groupEngineeringRecommendations
+} from "@/lib/engineering-course-sections";
 import { trackSubgroupingSupported } from "@/lib/engineering-track-course-match";
 import {
   isEngineeringFocusStudyAbroad,
@@ -286,11 +290,39 @@ function RequirementCourseCard({
 
 function RecommendedCourseCell({
   course,
-  onOpenDetails
+  onOpenDetails,
+  variant = "default"
 }: {
   course: Course;
   onOpenDetails: (course: Course) => void;
+  /** Richer card layout for the Engineering Courses tab. */
+  variant?: "default" | "engineering";
 }) {
+  const dept = course.code.trim().split(/\s+/)[0]?.toUpperCase() ?? "";
+  if (variant === "engineering") {
+    return (
+      <button
+        type="button"
+        onClick={() => onOpenDetails(course)}
+        className="group flex h-full w-full flex-col rounded-xl border border-slate-200/90 bg-white p-4 text-left shadow-sm ring-1 ring-slate-900/[0.04] transition hover:border-blue-400/70 hover:shadow-md hover:ring-blue-500/15"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="line-clamp-3 min-w-0 text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-950">
+            {course.title}
+          </span>
+          {dept ? (
+            <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+              {dept}
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-auto flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-t border-slate-100 pt-3">
+          <span className="font-mono text-xs font-semibold tracking-tight text-slate-700">{course.code}</span>
+          <span className="text-xs tabular-nums text-slate-500">{course.credits} cr.</span>
+        </div>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -925,48 +957,105 @@ export default function DashboardPage() {
             {dashboard.recommendedCourses.length === 0 ? (
               <EmptyState message="No engineering course recommendations are available yet for this profile. Add goals on your profile page." />
             ) : (
-              engineeringSections.map((section) => (
-                <div key={section.id} className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
-                    <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-600">
-                      {section.description}
-                    </p>
-                  </div>
-                  {section.subsections.map((sub, subIdx) => (
-                    <div
-                      key={`${section.id}-${sub.key}`}
-                      className={
-                        sub.title && subIdx > 0
-                          ? "space-y-3 border-t border-slate-100 pt-6"
-                          : sub.title
-                            ? "space-y-3"
-                            : ""
-                      }
-                    >
-                      {sub.title ? (
-                        <h4 className="text-base font-semibold text-slate-800">{sub.title}</h4>
-                      ) : null}
-                      <CourseGridThreeColumns
-                        courses={sub.items.map((r) => r.item)}
-                        renderItem={(course) => (
-                          <RecommendedCourseCell
-                            course={course}
-                            onOpenDetails={(c) =>
-                              openCourseDetail(
-                                c,
-                                engineeringReasonByCode.get(
-                                  c.code.trim().replace(/\s+/g, " ").toUpperCase()
-                                )
-                              )
-                            }
+              <div className="space-y-8">
+                {engineeringSections.length > 1 ? (
+                  <nav
+                    className="flex flex-wrap gap-2 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 sm:p-4"
+                    aria-label="Jump to course categories"
+                  >
+                    {engineeringSections.map((section) => {
+                      const st = ENGINEERING_SECTION_STYLE[section.id];
+                      return (
+                        <a
+                          key={section.id}
+                          href={`#${engineeringSectionAnchorId(section.id)}`}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        >
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${st.accentBar}`}
+                            aria-hidden
                           />
-                        )}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))
+                          {st.shortNavLabel}
+                        </a>
+                      );
+                    })}
+                  </nav>
+                ) : null}
+                {engineeringSections.map((section, sectionIdx) => {
+                  const st = ENGINEERING_SECTION_STYLE[section.id];
+                  const sectionCount = section.subsections.reduce((n, s) => n + s.items.length, 0);
+                  return (
+                    <section
+                      key={section.id}
+                      id={engineeringSectionAnchorId(section.id)}
+                      className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md shadow-slate-900/[0.06] ring-1 ring-slate-900/[0.04]"
+                    >
+                      <header
+                        className={`relative border-b border-slate-100/90 bg-gradient-to-r ${st.headerGradient}`}
+                      >
+                        <div className="flex gap-0">
+                          <div className={`w-1.5 shrink-0 sm:w-2 ${st.accentBar}`} aria-hidden />
+                          <div className="flex min-w-0 flex-1 flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:gap-4 sm:px-6 sm:py-5">
+                            <span
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-1 ${st.badgeClass}`}
+                            >
+                              {sectionIdx + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                                {section.title}
+                              </h3>
+                              <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-600">
+                                {section.description}
+                              </p>
+                            </div>
+                            <p className="shrink-0 rounded-full border border-slate-200/90 bg-white/90 px-3 py-1 text-center text-xs font-medium text-slate-600 shadow-sm sm:mt-1">
+                              {sectionCount} course{sectionCount === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                        </div>
+                      </header>
+                      <div className="space-y-5 bg-slate-50/60 px-4 py-5 sm:px-6 sm:py-6">
+                        {section.subsections.map((sub, subIdx) => (
+                          <div
+                            key={`${section.id}-${sub.key}`}
+                            className={subIdx > 0 ? "mt-6 border-t border-slate-200/80 pt-6" : ""}
+                          >
+                            {sub.title ? (
+                              <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                <span
+                                  className={`h-2 w-2 shrink-0 rounded-full ${st.accentBar}`}
+                                  aria-hidden
+                                />
+                                {sub.title}
+                              </h4>
+                            ) : null}
+                            <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm sm:p-4">
+                              <CourseGridThreeColumns
+                                courses={sub.items.map((r) => r.item)}
+                                renderItem={(course) => (
+                                  <RecommendedCourseCell
+                                    variant="engineering"
+                                    course={course}
+                                    onOpenDetails={(c) =>
+                                      openCourseDetail(
+                                        c,
+                                        engineeringReasonByCode.get(
+                                          c.code.trim().replace(/\s+/g, " ").toUpperCase()
+                                        )
+                                      )
+                                    }
+                                  />
+                                )}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
             )}
           </WidePanel>
         </div>

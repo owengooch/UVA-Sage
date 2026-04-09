@@ -63,6 +63,64 @@ const ENGINEERING_SECTION_META: Record<
   }
 };
 
+/** Tailwind classes for Engineering tab section cards and jump navigation. */
+export const ENGINEERING_SECTION_STYLE: Record<
+  EngineeringCourseSectionId,
+  {
+    shortNavLabel: string;
+    accentBar: string;
+    headerGradient: string;
+    badgeClass: string;
+  }
+> = {
+  design_capstone: {
+    shortNavLabel: "Design / capstone",
+    accentBar: "bg-amber-500",
+    headerGradient: "from-amber-50/90 via-amber-50/40 to-white",
+    badgeClass: "bg-amber-100 text-amber-950 ring-amber-200/90"
+  },
+  cpe_ece_cs_depth: {
+    shortNavLabel: "CpE · ECE/CS depth",
+    accentBar: "bg-violet-500",
+    headerGradient: "from-violet-50/90 via-violet-50/35 to-white",
+    badgeClass: "bg-violet-100 text-violet-950 ring-violet-200/90"
+  },
+  major_and_track_electives: {
+    shortNavLabel: "Major / track",
+    accentBar: "bg-blue-600",
+    headerGradient: "from-blue-50/90 via-blue-50/35 to-white",
+    badgeClass: "bg-blue-100 text-blue-950 ring-blue-200/90"
+  },
+  technical_electives: {
+    shortNavLabel: "Technical",
+    accentBar: "bg-teal-500",
+    headerGradient: "from-teal-50/90 via-teal-50/35 to-white",
+    badgeClass: "bg-teal-100 text-teal-950 ring-teal-200/90"
+  },
+  math_and_science_electives: {
+    shortNavLabel: "Math / science",
+    accentBar: "bg-cyan-500",
+    headerGradient: "from-cyan-50/90 via-cyan-50/35 to-white",
+    badgeClass: "bg-cyan-100 text-cyan-950 ring-cyan-200/90"
+  },
+  cs_upper_level: {
+    shortNavLabel: "CS electives",
+    accentBar: "bg-indigo-500",
+    headerGradient: "from-indigo-50/90 via-indigo-50/35 to-white",
+    badgeClass: "bg-indigo-100 text-indigo-950 ring-indigo-200/90"
+  },
+  other_options: {
+    shortNavLabel: "More options",
+    accentBar: "bg-slate-400",
+    headerGradient: "from-slate-100/90 via-slate-50/50 to-white",
+    badgeClass: "bg-slate-100 text-slate-900 ring-slate-200/90"
+  }
+};
+
+export function engineeringSectionAnchorId(id: EngineeringCourseSectionId): string {
+  return `engineering-section-${id}`;
+}
+
 const MAJOR_TRACK_CE_TAGS = new Set([
   "ce:ce_elective",
   "ce:ewr_elective",
